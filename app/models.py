@@ -28,7 +28,8 @@ class InvestigationType(models.Model):
     # Methods
     ##########
 
-    # N/A
+    def __str__(self):
+        return self.name 
 
     #######
     # Meta
@@ -64,7 +65,8 @@ class Project(models.Model):
     # Methods
     ##########
 
-    # N/A
+    def __str__(self):
+        return self.name 
 
     #######
     # Meta
@@ -98,7 +100,8 @@ class EntityType(models.Model):
     # Methods
     ##########
 
-    # N/A
+    def __str__(self):
+        return self.name 
 
     #######
     # Meta
@@ -132,7 +135,8 @@ class Entity(models.Model):
     # Methods
     ##########
 
-    # N/A
+    def __str__(self):
+        return self.name 
 
     #######
     # Meta
@@ -154,7 +158,7 @@ class EntityFieldDescriptor(models.Model):
         help_text="Enter help text for this field.",
         blank=True)
     #TODO: value_type = models. ...
-    required = models.BooleanField(default=False, "Is this a required field?")
+    required = models.BooleanField(default=False, help_text="Is this a required field?")
 
     ###############
     # Foreign Keys
@@ -166,7 +170,8 @@ class EntityFieldDescriptor(models.Model):
     # Methods
     ##########
 
-    # N/A
+    def __str__(self):
+        return self.label
 
     #######
     # Meta
@@ -182,7 +187,7 @@ class AbstractEntityFieldValue(models.Model):
     # Attributes
     #############
 
-    # N/A
+    value = models.CharField(max_length=200, blank=True, null=True)
 
     ###############
     # Foreign Keys
@@ -194,7 +199,8 @@ class AbstractEntityFieldValue(models.Model):
     # Methods
     ##########
 
-    # N/A
+    def __str__(self):
+        return str(self.value)
 
     #######
     # Meta
@@ -211,7 +217,7 @@ class EntityCharFieldValue(AbstractEntityFieldValue):
     # Attributes
     #############
 
-    value = models.CharField(max_length=200)
+    # inherited
 
     ###############
     # Foreign Keys
