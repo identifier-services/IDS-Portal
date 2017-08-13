@@ -194,6 +194,7 @@ class AbstractEntityFieldValue(models.Model):
     ###############
 
     entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
+    entity_field_descriptor = models.ForeignKey(EntityFieldDescriptor, on_delete=models.CASCADE, null=True)
 
     ##########
     # Methods
