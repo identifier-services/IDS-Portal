@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.urls import reverse
 
 
 class InvestigationType(models.Model):
@@ -27,6 +28,9 @@ class InvestigationType(models.Model):
     ##########
     # Methods
     ##########
+
+    def get_absolute_url(self):
+        return reverse('investigation-type-detail', args=[str(self.id)])
 
     def __str__(self):
         return self.name 
@@ -64,6 +68,9 @@ class Project(models.Model):
     ##########
     # Methods
     ##########
+
+    def get_absolute_url(self):
+        return reverse('project-detail', args=[str(self.id)])
 
     def __str__(self):
         return self.name 

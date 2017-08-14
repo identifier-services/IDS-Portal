@@ -6,9 +6,8 @@
     {% if project_list %}
         <ul>
             {% for project in project_list %}
-            <li>
-                <a href="#">{{ project.name }}</a> ({{ project.description }})
-            <li>
+                <li><a href="{{ project.get_absolute_url }}">{{ project }}</a>
+                (investigation type: <a href="{{ project.investigation_type.get_absoluate_url }}">{{ project.investigation_type }}</a>)</li>
             {% endfor %}
         </ul>
     {% else %}

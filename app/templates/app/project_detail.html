@@ -1,0 +1,14 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>Project name: {{ project.name }}</h1>
+    <h3>Investigation Type: {{ project.investigation_type }}</h3>
+    <h3>Entities:</h3>
+    <ul>
+    {% for entity in project.entity_set.all  %}
+        <li>
+        {{ entity }}
+        </li>
+    {% endfor %}
+    </ul>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>Project List</hq>
+
+    {% if investigation_type_list %}
+        <ul>
+            {% for investigation_type in investigation_type_list %}
+                <li><a href="#">{{ investigation_type }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>There are no investigation_types.</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>Entity Type List</hq>
+
+    {% if entity_type_list %}
+        <ul>
+            {% for entity_type in entity_type_list %}
+                <li><a href="#">{{ entity_type }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>There are no entity_types.</p>
+    {% endif %}
+{% endblock %}
