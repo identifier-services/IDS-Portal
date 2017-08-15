@@ -82,7 +82,7 @@ class Project(models.Model):
     # N/A
 
 
-class EntityType(models.Model):
+class ElementType(models.Model):
     """Model describing the types of entities that may be instantiated 
     per investigation type."""
 
@@ -90,11 +90,11 @@ class EntityType(models.Model):
     # Attributes
     #############
 
-    #TODO: should entity type name be unique globally? per investigation type?
+    #TODO: should element type name be unique globally? per investigation type?
     name = models.CharField(max_length=200, 
-        help_text="Enter a name for this type of entity.")
+        help_text="Enter a name for this type of element.")
     description = models.TextField(max_length=1000, 
-        help_text="Enter a brief description of this type of entity.",
+        help_text="Enter a brief description of this type of element.",
         blank=True)
 
     ###############
@@ -117,25 +117,25 @@ class EntityType(models.Model):
     # N/A
 
 
-class Entity(models.Model):
-    """Model representing an individual entity."""
+class Element(models.Model):
+    """Model representing an individual element."""
 
     #############
     # Attributes
     #############
 
-    #TODO: should entity name be unique globally? per project instance?
+    #TODO: should element name be unique globally? per project instance?
     name = models.CharField(max_length=200, 
-        help_text="Enter a name for this entity instance.")
+        help_text="Enter a name for this element instance.")
     description = models.TextField(max_length=1000, 
-        help_text="Enter a brief description of this entity instance.",
+        help_text="Enter a brief description of this element instance.",
         blank=True)
 
     ###############
     # Foreign Keys
     ###############
 
-    entity_type = models.ForeignKey(EntityType, on_delete=models.CASCADE) 
+    element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
     project = models.ForeignKey(Project, on_delete=models.CASCADE) 
 
     ##########
@@ -152,8 +152,8 @@ class Entity(models.Model):
     # N/A
 
 
-class EntityFieldDescriptor(models.Model):
-    """Model describes an attribute of an entity."""
+class ElementFieldDescriptor(models.Model):
+    """Model describes an attribute of an element."""
 
     #############
     # Attributes
@@ -171,7 +171,7 @@ class EntityFieldDescriptor(models.Model):
     # Foreign Keys
     ###############
 
-    entity_type = models.ForeignKey(EntityType, on_delete=models.CASCADE) 
+    element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
 
     ##########
     # Methods
@@ -187,8 +187,8 @@ class EntityFieldDescriptor(models.Model):
     # N/A
 
 
-class AbstractEntityFieldValue(models.Model):
-    """Abstract class for various types of entity field values"""
+class AbstractElementFieldValue(models.Model):
+    """Abstract class for various types of element field values"""
 
     #############
     # Attributes
@@ -200,8 +200,8 @@ class AbstractEntityFieldValue(models.Model):
     # Foreign Keys
     ###############
 
-    entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
-    entity_field_descriptor = models.ForeignKey(EntityFieldDescriptor, on_delete=models.CASCADE, null=True)
+    element = models.ForeignKey(Element, on_delete=models.CASCADE)
+    element_field_descriptor = models.ForeignKey(ElementFieldDescriptor, on_delete=models.CASCADE, null=True)
 
     ##########
     # Methods
@@ -218,8 +218,8 @@ class AbstractEntityFieldValue(models.Model):
         abstract = True
 
 
-class EntityCharFieldValue(AbstractEntityFieldValue):
-    """Entity CharField attribute value."""
+class ElementCharFieldValue(AbstractElementFieldValue):
+    """Element CharField attribute value."""
 
     #############
     # Attributes
@@ -231,7 +231,7 @@ class EntityCharFieldValue(AbstractEntityFieldValue):
     # Foreign Keys
     ###############
 
-    # Entity - inherited
+    # Element - inherited
 
     ##########
     # Methods
@@ -248,8 +248,8 @@ class EntityCharFieldValue(AbstractEntityFieldValue):
     pass
 
 
-class EntityTextFieldValue(AbstractEntityFieldValue):
-    """Entity CharField attribute value."""
+class ElementTextFieldValue(AbstractElementFieldValue):
+    """Element CharField attribute value."""
 
     #############
     # Attributes
@@ -261,7 +261,7 @@ class EntityTextFieldValue(AbstractEntityFieldValue):
     # Foreign Keys
     ###############
 
-    # Entity - inherited
+    # Element - inherited
 
     ##########
     # Methods
@@ -278,8 +278,8 @@ class EntityTextFieldValue(AbstractEntityFieldValue):
     pass
 
 
-class EntityDateFieldValue(AbstractEntityFieldValue):
-    """Entity CharField attribute value."""
+class ElementDateFieldValue(AbstractElementFieldValue):
+    """Element CharField attribute value."""
 
     #############
     # Attributes
@@ -291,7 +291,7 @@ class EntityDateFieldValue(AbstractEntityFieldValue):
     # Foreign Keys
     ###############
 
-    # Entity - inherited
+    # Element - inherited
 
     ##########
     # Methods
@@ -308,8 +308,8 @@ class EntityDateFieldValue(AbstractEntityFieldValue):
     pass
 
 
-class EntityURLFieldValue(AbstractEntityFieldValue):
-    """Entity CharField attribute value."""
+class ElementURLFieldValue(AbstractElementFieldValue):
+    """Element CharField attribute value."""
 
     #############
     # Attributes
@@ -321,7 +321,7 @@ class EntityURLFieldValue(AbstractEntityFieldValue):
     # Foreign Keys
     ###############
 
-    # Entity - inherited
+    # Element - inherited
 
     ##########
     # Methods

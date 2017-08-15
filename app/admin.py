@@ -16,36 +16,36 @@ class ProjectAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(EntityType)
-class EntityTypeAdmin(admin.ModelAdmin):
+@admin.register(ElementType)
+class ElementTypeAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(Entity)
-class EntityAdmin(admin.ModelAdmin):
+@admin.register(Element)
+class ElementAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(EntityFieldDescriptor)
-class EntityFieldDescriptorAdmin(admin.ModelAdmin):
+@admin.register(ElementFieldDescriptor)
+class ElementFieldDescriptorAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(EntityCharFieldValue)
-class EntityCharFieldValueAdmin(admin.ModelAdmin):
+@admin.register(ElementCharFieldValue)
+class ElementCharFieldValueAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(EntityTextFieldValue)
-class EntityTextFieldValueAdmin(admin.ModelAdmin):
+@admin.register(ElementTextFieldValue)
+class ElementTextFieldValueAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(EntityDateFieldValue)
-class EntityDateFieldValueAdmin(admin.ModelAdmin):
+@admin.register(ElementDateFieldValue)
+class ElementDateFieldValueAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(EntityURLFieldValue)
-class EntityURLFieldValueAdmin(admin.ModelAdmin):
+@admin.register(ElementURLFieldValue)
+class ElementURLFieldValueAdmin(admin.ModelAdmin):
     pass

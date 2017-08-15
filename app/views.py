@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.shortcuts import render
 from django.views import generic
 
-from .models import InvestigationType, Project, EntityType
+from .models import InvestigationType, Project, ElementType
 
 
 #############
@@ -38,12 +38,12 @@ class ProjectDetailView(generic.DetailView):
     model = Project
 
 ###############
-# Entity Type #
+# Element Type #
 ###############
 
-class EntityTypeListView(generic.ListView):
-    model = EntityType
+class ElementTypeListView(generic.ListView):
+    model = ElementType
 
 
-class EntityTypeDetailView(generic.DetailView):
-    model = EntityType
+class ElementTypeDetailView(generic.DetailView):
+    model = ElementType

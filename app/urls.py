@@ -11,6 +11,6 @@ urlpatterns = [
     url(r'^investigation-types/$', views.InvestigationTypeListView.as_view(), name='investigation-types'),
     url(r'^investigation-type/(?P<pk>\d+)$', views.InvestigationTypeDetailView.as_view(), name='investigation-type-detail'),
 
-    url(r'^entity-types/$', views.EntityTypeListView.as_view(), name='entity-types'),
-    url(r'^entity-type/(?P<pk>\d+)$', views.EntityTypeDetailView.as_view(), name='entity-type-detail'),
+    url(r'^element-types/$', views.ElementTypeListView.as_view(), name='element-types'),
+    url(r'^element-type/(?P<pk>\d+)$', views.ElementTypeDetailView.as_view(), name='element-type-detail'),
 ]
