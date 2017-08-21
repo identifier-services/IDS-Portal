@@ -13,7 +13,7 @@ from .models import InvestigationType, Project, ElementType
 
 def index(request):
     """home page"""
-    return render (request, 'index.html', context={})
+    return render (request, 'app/index.html', context={})
 
 ######################
 # Investigation Type #
