@@ -1,0 +1,9 @@
+{% extends 'based.html'  %}
+{% block content  %}
+    <form method='post' ectype='multipart/form-data'>
+        {% csrf_token  %}
+        {{ form.as_p }}
+        <button type='submit'>Upload</button>
+    </form>
+    <p><a href="{% url 'home'  %}">Return to home</a></p>
+{% endblock  %}
