@@ -1,0 +1,23 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>Investigation Type: {{ investigationtype }}</h1>
+
+    <h3>Element Types:</h3>
+    <ul>
+    {% for element_type in investigationtype.element_type_set.all %}
+        <li>
+        {{ element_type }}
+        </li>
+    {% endfor %}
+    </ul>
+
+    <h3>Projects:</h3>
+    <ul>
+    {% for project in investigationtype.project_set.all %}
+        <li>
+        {{ project }}
+        </li>
+    {% endfor %}
+    </ul>
+{% endblock %}

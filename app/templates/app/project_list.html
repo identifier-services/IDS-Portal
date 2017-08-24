@@ -1,7 +1,9 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-    <h1>Project List</hq>
+    <h1>Project List</h1>
+
+    <a href="{% url 'app:project_create' %}">Add new project</a>
 
     {% if project_list %}
         <ul>
