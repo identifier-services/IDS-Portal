@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from django.core.files.storage import FileSystemStorage
-from django.shortcuts import render
+from django.shortcuts import render, reverse, HttpResponseRedirect
 from django.views import generic
 
 from zipfile import ZipFile
 import csv
 
 from app.models import InvestigationType, Project, ElementType
+from .forms import UploadForm
 
 
 #############
@@ -29,24 +30,53 @@ def upload(request):
     # POST #
     ########
 
-    if request.method == 'POST' and request.FILES['myfile']:
-        myfile = request.FILES['myfile']
-        zf = ZipFile(myfile)
-        for filename in zf.namelist():
-            data = zf.read(filename).split('\n')
-            reader = csv.DictReader(data, delimiter=str('\t'))
-            for row in reader:
-                print row
 #    * # TODO
 #      * user uploads zip file
 #        * specifies project name
 #          * same name as zip file?
 #        * specifies investigation type
 #          * existing or new
+
+    element_types = []
+
+    # temporary
+    return HttpResponseRedirect(reverse('app:project_list'))
+    # temporary
+
+    if request.method == 'POST' and request.FILES['myfile']:
+
+        myfile = request.FILES['myfile']
+        zf = ZipFile(myfile)
+
+        for filename in zf.namelist():
+
 #      * app extracts csv files
+
+            data = zf.read(filename).split('\n')
+
 #      * app instantiates csv.DictReader for each csv file
-#      * app reads (next) each line into separate list for each csv file
+
+            reader = csv.DictReader(data, delimiter=str('\t'))
+
+            name = '_'.join(filename.split('.')[:-1])
+            fields = reader.fieldnames
+
+            elements = []
+
+            for row in reader:
+                elements.append(row)
+
+            element_types.append({
+                'name': name,
+                'fields': fields,
+                'elements': elements
+            })
+
 #      * app processes lists
+
+        # print element_types
+
+
 #        * for each list:
 #          * if not existing, app creates element type
 #            * element type is related to investigation type
@@ -74,13 +104,20 @@ def upload(request):
 #                      * [?] has output type? has input type?
 #                        * 'suggest' model?
 #              * note: i think we need to create all the object before we create relationships between them.
+
         return render (request, 'bulk/upload.html', context={})
 
     #######
     # GET #
     #######
 
-    return render (request, 'bulk/upload.html', context={})
+    context = {
+        'investigation_type_list': InvestigationType.objects.all(),
+        'project_list': Project.objects.all(),
+        'upload_form': UploadForm(),
+    }
+
+    return render (request, 'bulk/upload.html', context=context)
 
 ############
 # Download #

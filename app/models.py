@@ -29,8 +29,11 @@ class InvestigationType(models.Model):
     # Methods
     ##########
 
+    def get_parent_type(self):
+        return None
+
     def get_absolute_url(self):
-        return reverse('investigation-type-detail', args=[str(self.id)])
+        return reverse('app:investigation_type_detail', args=[str(self.id)])
 
     def __str__(self):
         return self.name 
@@ -69,8 +72,11 @@ class Project(models.Model):
     # Methods
     ##########
 
+    def get_parent_type(self):
+        return None
+
     def get_absolute_url(self):
-        return reverse('project-detail', args=[str(self.id)])
+        return reverse('app:project_detail', args=[str(self.id)])
 
     def __str__(self):
         return self.name 
@@ -85,6 +91,8 @@ class Project(models.Model):
 class ElementType(models.Model):
     """Model describing the types of entities that may be instantiated 
     per investigation type."""
+
+    _parent_type = InvestigationType
 
     #############
     # Attributes
@@ -106,6 +114,13 @@ class ElementType(models.Model):
     ##########
     # Methods
     ##########
+
+    @classmethod
+    def get_parent_type(cls):
+        return cls._parent_type
+
+    def get_absolute_url(self):
+        return reverse('app:element_type_detail', args=[str(self.id)])
 
     def __str__(self):
         return self.name 
@@ -142,6 +157,12 @@ class Element(models.Model):
     # Methods
     ##########
 
+    def get_parent_type(self):
+        return None
+
+    def get_absolute_url(self):
+        return reverse('app:element_detail', args=[str(self.id)])
+
     def __str__(self):
         return self.name 
 
@@ -177,6 +198,12 @@ class ElementFieldDescriptor(models.Model):
     # Methods
     ##########
 
+    def get_parent_type(self):
+        return None
+
+    def get_absolute_url(self):
+        return reverse('app:element_field_descriptor_detail', args=[str(self.id)])
+
     def __str__(self):
         return self.label
 
@@ -206,6 +233,9 @@ class AbstractElementFieldValue(models.Model):
     ##########
     # Methods
     ##########
+
+    def get_parent_type(self):
+        return None
 
     def __str__(self):
         return str(self.value)
@@ -237,7 +267,11 @@ class ElementCharFieldValue(AbstractElementFieldValue):
     # Methods
     ##########
 
-    # N/A
+    def get_absolute_url(self):
+        return reverse('app:element_char_field_value_detail', args=[str(self.id)])
+
+    def __str__(self):
+        return str(self.value)
 
     #######
     # Meta

@@ -6,7 +6,9 @@
 
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    <input type="file" name="myfile">
+    <table>
+    {{ upload_form }}
+    </table>
     <button type="submit">Upload</button>
   </form>
 
@@ -16,5 +18,30 @@
   {% endif %}
 
   <p><a href="{% url 'app:index' %}"></a></p>
+
+  <h3>Investigation Types:</h3>
+
+  {% if investigation_type_list %}                                                       
+    <ul>                                                                    
+      {% for investigation_type in investigation_type_list %}                                   
+        <li><a href="{{ investigation_type.get_absolute_url }}">{{ investigation_type }}</a>  
+      {% endfor %}                                                        
+    </ul>                                                                   
+  {% else %}                                                                  
+    <p>No investigation types have been defined.</p>                                           
+  {% endif %}
+
+  <h3>Projects:</h3>
+
+  {% if project_list %}                                                       
+    <ul>                                                                    
+      {% for project in project_list %}                                   
+        <li><a href="{{ project.get_absolute_url }}">{{ project }}</a>  
+        (investigation type: <a href="{{ project.investigation_type.get_absolute_url }}">{{ project.investigation_type }}</a>)</li>
+      {% endfor %}                                                        
+    </ul>                                                                   
+  {% else %}                                                                  
+    <p>There are no projects.</p>                                           
+  {% endif %}
 
 {% endblock %}

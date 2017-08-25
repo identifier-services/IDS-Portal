@@ -6,10 +6,11 @@
     {% if investigationtype_list %}
         <ul>
             {% for investigation_type in investigationtype_list %}
-                <li><a href="{{ investigationtype.get_absolute_url }}">{{ investigation_type }}</a></li>
+                <li><a href="{{ investigation_type.get_absolute_url }}">{{ investigation_type }}</a></li>
             {% endfor %}
         </ul>
     {% else %}
         <p>There are no investigation types.</p>
     {% endif %}
+    <p><a href="{% url 'app:investigation_type_create' %}">Add new investigation type</a></p>
 {% endblock %}
