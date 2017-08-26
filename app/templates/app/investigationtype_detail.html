@@ -3,6 +3,20 @@
 {% block content %}
     <h1>Investigation Type: {{ investigationtype }}</h1>
 
+    <p>parent types: {{ investigationtype.get_parent_types }}</p>
+    <p>foreign key field names: 
+        {% for parent_type in investigationtype.get_parent_types %}
+            i'm the parent type {{ parent_type }}
+        {% endfor %}
+    </p>
+
+    <p>child types: {{ investigationtype.get_child_types }} </p>
+    <p>many to one set names: 
+        {% for child_type in investigationtype.get_child_types %}
+            i'm the child type {{ child_type }}
+        {% endfor %}
+    </p>
+
 
     <h3>Element Types:</h3>
     <ul>

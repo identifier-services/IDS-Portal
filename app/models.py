@@ -29,8 +29,12 @@ class InvestigationType(models.Model):
     # Methods
     ##########
 
-    def get_parent_type(self):
-        return None
+    def get_parent_types(self):
+        return map(lambda x: x.related_model, filter(lambda x: type(x) == models.ForeignKey, self._meta.get_fields())) 
+
+    def get_child_types(self):
+        return map(lambda x: x.related_model, filter(lambda x: type(x) == models.ManyToOneRel, self._meta.get_fields())) 
+
 
     def get_absolute_url(self):
         return reverse('app:investigation_type_detail', args=[str(self.id)])
@@ -72,8 +76,11 @@ class Project(models.Model):
     # Methods
     ##########
 
-    def get_parent_type(self):
-        return None
+    def get_parent_types(self):
+        return map(lambda x: x.related_model, filter(lambda x: type(x) == models.ForeignKey, self._meta.get_fields())) 
+
+    def get_child_types(self):
+        return map(lambda x: x.related_model, filter(lambda x: type(x) == models.ManyToOneRel, self._meta.get_fields())) 
 
     def get_absolute_url(self):
         return reverse('app:project_detail', args=[str(self.id)])

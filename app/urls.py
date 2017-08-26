@@ -103,7 +103,7 @@ urlpatterns = [
     # create
     url(r'^element-field-descriptor/create/$', 
         views.ElementFieldDescriptorCreateView.as_view(), 
-        name='element_field-descriptor_create'),
+        name='element_field_descriptor_create'),
     
     # detail
     url(r'^element-field-descriptor/(?P<pk>\d+)$', 
