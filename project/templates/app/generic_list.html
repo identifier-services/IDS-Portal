@@ -1,0 +1,22 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>{{ page_name }}</h1>
+
+    {% for object in objects  %}
+        {{ object }}
+    {% endfor  %}
+
+    <ul>
+        {% if project_list %}
+            {% for project in project_list %}
+                <li><a href="{{ project.get_absolute_url }}">{{ project }}</a>
+                (investigation type: <a href="{{ project.investigation_type.get_absoluate_url }}">{{ project.investigation_type }}</a>)</li>
+            {% endfor %}
+        {% else %}
+            <p>There are no {{ type_name }}s.</p>
+        {% endif %}
+        <p><a href="{{ create_route }}">Add new {{ type_name }}</a></p>
+    </ul>
+
+{% endblock %}

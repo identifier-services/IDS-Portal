@@ -1,0 +1,51 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>Investigation Type: {{ investigationtype }}</h1>
+
+    <p>parent types: {{ investigationtype.get_relationships.parent }}</p>
+    <p>foreign key field names: 
+        {% for parent_type in investigationtype.get_parent_types %}
+            i'm the parent type {{ parent_type }}
+        {% endfor %}
+    </p>
+
+    <p>child types: {{ investigationtype.get_relationships.child }} </p>
+    <p>many to one set names: 
+        {% for child_type in investigationtype.get_child_types %}
+            i'm the child type {{ child_type }}
+        {% endfor %}
+    </p>
+
+
+    <h3>Element Types:</h3>
+    <ul>
+        {% if investigationtype.element_type_set.count > 0  %}
+            {% for element_type in investigationtype.element_type_set.all %}
+                <li><a href="{{ element_type.get_absolute_url }}">{{ element_type }}</a></li>
+            {% endfor %}
+        {% else %}
+            <p>There are no element types associated with this investigation type.</p>
+        {% endif %}
+
+        <p>
+            <a href="{% url 'app:element_type_create' %}?parent={{ investigationtype.id }}">Add element type</a>
+        </p>
+    </ul>
+
+    <h3>Projects:</h3>
+    <ul>
+        {% if investigationtype.project_set.count > 0  %}
+            {% for project in investigationtype.project_set.all %}
+                <li><a href="{{ project.get_absolute_url }}">{{ project }}</a></li>
+            {% endfor %}
+        {% else %}
+            <p>There are no projects associated with this investigation type.</p>
+        {% endif %}
+
+        <p>
+            <a href="{% url 'app:project_create' %}?parent={{ investigationtype.id }}">Add project</a>
+        </p>
+    </ul>
+
+{% endblock %}
