@@ -37,6 +37,21 @@ class AbstractModel(models.Model):
         help_text = 'Enter a description for this %s.' % verbose_name
         self._meta.get_field('description').help_text = help_text
 
+    @classmethod
+    def get_parent_types(self):
+        fields = self._meta.get_fields()
+        foreign_keys = filter(lambda x: type(x) == models.ForeignKey, fields)
+        parent_types = []
+
+        for foreign_key in foreign_keys:
+            parent = getattr(self, foreign_key.name)
+            parent_types.append({
+                'field_name': foreign_key.name,
+                'class': parent.field.model,
+            })
+
+        return parent_types
+
     def get_parent_relations(self):
         fields = self._meta.get_fields()
         foreign_keys = filter(lambda x: type(x) == models.ForeignKey, fields)
@@ -50,6 +65,7 @@ class AbstractModel(models.Model):
 
         return parents
 
+
     def get_child_relations(self):
         fields = self._meta.get_fields()
         many_to_ones = filter(lambda x: type(x) == models.ManyToOneRel, fields)
@@ -59,13 +75,10 @@ class AbstractModel(models.Model):
             child_relations.append({
                 'type_name': many_to_one.name,
                 'objects': rm.values(),
-                'create_url': many_to_one.model.get_create_url(),
+                'create_url': many_to_one.related_model.get_create_url(),
             })
 
-        import pdb; pdb.set_trace()
-
         return child_relations
-
 
     def get_fields(self):
         fields = filter(lambda x: (not x.auto_created and not x.related_model),
@@ -79,29 +92,6 @@ class AbstractModel(models.Model):
             })
 
         return field_list
-
-    def get_related_types(self):
-        fields = self._meta.get_fields()
-    
-        foreign_keys = filter(lambda x: type(x) == models.ForeignKey, fields)
-        parent_rels = []
-
-        for foreign_key in foreign_keys:
-            parent_rels.append({
-                'field_name': foreign_key.name,
-                'type': foreign_key.related_model, 
-            })
-
-        many_to_ones = filter(lambda x: type(x) == models.ManyToOneRel, fields)
-        child_rels = []
-
-        for many_to_one in many_to_ones:
-            child_rels.append({
-                'field_name': many_to_one.name,
-                'type': many_to_one.related_model, 
-            })
-
-        return {'parent': parent_rels, 'child': child_rels}
 
     def get_absolute_url(self):
         route = 'app:%s_detail' % snake(self.__class__.__name__)

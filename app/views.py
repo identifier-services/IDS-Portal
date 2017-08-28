@@ -34,6 +34,32 @@ class BaseGenericDetailView(generic.DetailView):
         context['type_name'] = verbose_name
         return context
 
+class BaseGenericCreateView(generic.CreateView):
+    fields = '__all__'
+
+    def get_initial(self):
+        
+        parent_id = self.request.GET.get('parent')
+        initial = {}
+
+        if parent_id:
+
+            parent_types = self.model.get_parent_types()
+
+            import pdb; pdb.set_trace()
+
+            #TODO: multiple parents
+
+            if parent_types:
+                parent_type = parent_types[0]
+                field_name = parent_type['field_name']
+                parent_class = parent_type['class']
+                initial = {
+                    field_name: parent_class.objects.get(pk=parent_id)
+                }
+
+        return initial
+
 #############
 # Home Page #
 #############
@@ -74,9 +100,8 @@ class ProjectListView(BaseGenericListView):
     model = Project
 
 
-class ProjectCreateView(generic.CreateView):
+class ProjectCreateView(BaseGenericCreateView):
     model = Project
-    fields = '__all__'
 
 
 class ProjectDetailView(BaseGenericDetailView):
