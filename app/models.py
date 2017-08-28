@@ -4,180 +4,146 @@ from __future__ import unicode_literals
 from django.db import models
 from django.urls import reverse
 
+import re
 
-class InvestigationType(models.Model):
+def snake(name):
+    """
+    Takes camelcase string, returns string in snake case.
+    https://stackoverflow.com/a/12867228
+    """
+    return re.sub('(?!^)([A-Z]+)', r'_\1', name).lower()
+
+
+class AbstractModel(models.Model):
+    """Abstract class for various types of element field values"""
+
+    name = models.CharField(max_length=200, 
+        help_text="Enter a name.")
+
+    description = models.TextField(max_length=1000, 
+        help_text="Enter a description.", blank=True)
+
+    def __init__(self, *args, **kwargs):
+        super(AbstractModel, self).__init__(*args, **kwargs)
+
+        # this is really hacky, for one reason, because it doesn't
+        # set the new help_text until after the first time the
+        # user sees it. leaving it for now though...
+
+        verbose_name = self._meta.verbose_name
+        help_text = 'Enter a name for this %s.' % verbose_name
+        self._meta.get_field('name').help_text = help_text
+
+        help_text = 'Enter a description for this %s.' % verbose_name
+        self._meta.get_field('description').help_text = help_text
+
+    def get_parent_relations(self):
+        fields = self._meta.get_fields()
+        foreign_keys = filter(lambda x: type(x) == models.ForeignKey, fields)
+        parents = []
+        for foreign_key in foreign_keys:
+            parent = getattr(self, foreign_key.name)
+            parents.append({
+                'verbose_name': parent._meta.verbose_name,
+                'object': parent,
+            })
+
+        return parents
+
+    def get_child_relations(self):
+        fields = self._meta.get_fields()
+        many_to_ones = filter(lambda x: type(x) == models.ManyToOneRel, fields)
+        child_relations = []
+        for many_to_one in many_to_ones:        
+            rm = getattr(self,'%s_set' % many_to_one.name)
+            child_relations.append({
+                'type_name': many_to_one.name,
+                'objects': rm.values(),
+                'create_url': many_to_one.model.get_create_url(),
+            })
+
+        import pdb; pdb.set_trace()
+
+        return child_relations
+
+
+    def get_fields(self):
+        fields = filter(lambda x: (not x.auto_created and not x.related_model),
+            self._meta.get_fields())
+
+        field_list = []
+        for field in fields:
+            field_list.append({
+                'label': field.verbose_name,
+                'value': getattr(self, field.name),
+            })
+
+        return field_list
+
+    def get_related_types(self):
+        fields = self._meta.get_fields()
+    
+        foreign_keys = filter(lambda x: type(x) == models.ForeignKey, fields)
+        parent_rels = []
+
+        for foreign_key in foreign_keys:
+            parent_rels.append({
+                'field_name': foreign_key.name,
+                'type': foreign_key.related_model, 
+            })
+
+        many_to_ones = filter(lambda x: type(x) == models.ManyToOneRel, fields)
+        child_rels = []
+
+        for many_to_one in many_to_ones:
+            child_rels.append({
+                'field_name': many_to_one.name,
+                'type': many_to_one.related_model, 
+            })
+
+        return {'parent': parent_rels, 'child': child_rels}
+
+    def get_absolute_url(self):
+        route = 'app:%s_detail' % snake(self.__class__.__name__)
+        return reverse(route, args=[str(self.id)])
+
+    @classmethod
+    def get_create_url(cls):
+        route = 'app:%s_create' % snake(cls.__name__)
+        return reverse(route)
+
+    def __str__(self):
+        return self.name 
+
+    class Meta:
+        abstract = True
+
+
+class InvestigationType(AbstractModel):
     """Model describing the types of projects that may be instantiated."""
 
-    #############
-    # Attributes
-    #############
-
-    name = models.CharField(max_length=200, 
-        help_text="Enter a unique name for this investigation type.",
-        unique=True)
-    description = models.TextField(max_length=1000, 
-        help_text="Enter a brief description of this type of project.",
-        blank=True)
-
-    ###############
-    # Foreign Keys
-    ###############
-
-    # N/A
-
-    ##########
-    # Methods
-    ##########
-
-    def get_parent_types(self):
-        return map(lambda x: x.related_model, filter(lambda x: type(x) == models.ForeignKey, self._meta.get_fields())) 
-
-    def get_child_types(self):
-        return map(lambda x: x.related_model, filter(lambda x: type(x) == models.ManyToOneRel, self._meta.get_fields())) 
+    class Meta:
+        verbose_name = "investigation type"
 
 
-    def get_absolute_url(self):
-        return reverse('app:investigation_type_detail', args=[str(self.id)])
-
-    def __str__(self):
-        return self.name 
-
-    #######
-    # Meta
-    #######
-
-    # N/A
-
-
-class Project(models.Model):
+class Project(AbstractModel):
     """Model representing an individual research project."""
 
-    #############
-    # Attributes
-    #############
-
-    #TODO: should project name be unique globally? per user?
-    name = models.CharField(max_length=200, 
-        help_text="Enter a name for this project.")
-    description = models.TextField(max_length=1000, 
-        help_text="Enter a brief description of this project.",
-        blank=True)
-
-    ###############
-    # Foreign Keys
-    ###############
-
-    # InvestigationType
     investigation_type = models.ForeignKey(InvestigationType, on_delete=models.CASCADE) 
 
-    # Creator
 
-    ##########
-    # Methods
-    ##########
-
-    def get_parent_types(self):
-        return map(lambda x: x.related_model, filter(lambda x: type(x) == models.ForeignKey, self._meta.get_fields())) 
-
-    def get_child_types(self):
-        return map(lambda x: x.related_model, filter(lambda x: type(x) == models.ManyToOneRel, self._meta.get_fields())) 
-
-    def get_absolute_url(self):
-        return reverse('app:project_detail', args=[str(self.id)])
-
-    def __str__(self):
-        return self.name 
-
-    #######
-    # Meta
-    #######
-
-    # N/A
-
-
-class ElementType(models.Model):
+class ElementType(AbstractModel):
     """Model describing the types of entities that may be instantiated 
     per investigation type."""
 
-    _parent_type = InvestigationType
-
-    #############
-    # Attributes
-    #############
-
-    #TODO: should element type name be unique globally? per investigation type?
-    name = models.CharField(max_length=200, 
-        help_text="Enter a name for this type of element.")
-    description = models.TextField(max_length=1000, 
-        help_text="Enter a brief description of this type of element.",
-        blank=True)
-
-    ###############
-    # Foreign Keys
-    ###############
-
     investigation_type = models.ForeignKey(InvestigationType, on_delete=models.CASCADE) 
 
-    ##########
-    # Methods
-    ##########
 
-    @classmethod
-    def get_parent_type(cls):
-        return cls._parent_type
-
-    def get_absolute_url(self):
-        return reverse('app:element_type_detail', args=[str(self.id)])
-
-    def __str__(self):
-        return self.name 
-
-    #######
-    # Meta
-    #######
-
-    # N/A
-
-
-class Element(models.Model):
+class Element(AbstractModel):
     """Model representing an individual element."""
-
-    #############
-    # Attributes
-    #############
-
-    #TODO: should element name be unique globally? per project instance?
-    name = models.CharField(max_length=200, 
-        help_text="Enter a name for this element instance.")
-    description = models.TextField(max_length=1000, 
-        help_text="Enter a brief description of this element instance.",
-        blank=True)
-
-    ###############
-    # Foreign Keys
-    ###############
 
     element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
     project = models.ForeignKey(Project, on_delete=models.CASCADE) 
-
-    ##########
-    # Methods
-    ##########
-
-    def get_parent_type(self):
-        return None
-
-    def get_absolute_url(self):
-        return reverse('app:element_detail', args=[str(self.id)])
-
-    def __str__(self):
-        return self.name 
-
-    #######
-    # Meta
-    #######
-
-    # N/A
 
 
 class ElementFieldDescriptor(models.Model):
@@ -205,20 +171,11 @@ class ElementFieldDescriptor(models.Model):
     # Methods
     ##########
 
-    def get_parent_type(self):
-        return None
-
     def get_absolute_url(self):
         return reverse('app:element_field_descriptor_detail', args=[str(self.id)])
 
     def __str__(self):
         return self.label
-
-    #######
-    # Meta
-    #######
-
-    # N/A
 
 
 class AbstractElementFieldValue(models.Model):

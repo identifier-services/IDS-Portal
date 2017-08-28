@@ -13,7 +13,7 @@
         {% else %}
             <p>There are no {{ type_name }}s.</p>
         {% endif %}
-        <p><a href="{{ object.get_create_route }}">Add new {{ type_name }}</a></p>
+        <p><a href="{{ create_url }}">Add new {{ type_name }}</a></p>
     </ul>
 
 {% endblock %}

@@ -7,6 +7,33 @@ from django.views import generic
 from .models import InvestigationType, Project, ElementType, ElementFieldDescriptor, Element, ElementCharFieldValue
 
 
+##############
+# Base Views #
+##############
+
+class BaseGenericListView(generic.ListView):
+    template_name = 'app/generic_list.html'
+    context_object_name = 'object_list'
+
+    def get_context_data(self, **kwargs):
+        context = super(BaseGenericListView, self).get_context_data(**kwargs)
+        verbose_name = self.model._meta.verbose_name
+        context['page_name'] = '%s List' % verbose_name.title() 
+        context['type_name'] = verbose_name
+        context['create_url'] = self.model.get_create_url()
+        return context
+
+class BaseGenericDetailView(generic.DetailView):
+    template_name = 'app/generic_detail.html'
+    context_object_name = 'object'
+
+    def get_context_data(self, **kwargs):
+        context = super(BaseGenericDetailView, self).get_context_data(**kwargs)
+        verbose_name = self.model._meta.verbose_name
+        context['page_name'] = '%s Detail' % verbose_name.title() 
+        context['type_name'] = verbose_name
+        return context
+
 #############
 # Home Page #
 #############
@@ -19,7 +46,7 @@ def index(request):
 # Investigation Type #
 ######################
 
-class InvestigationTypeListView(generic.ListView):
+class InvestigationTypeListView(BaseGenericListView):
     model = InvestigationType
 
 
@@ -28,7 +55,7 @@ class InvestigationTypeCreateView(generic.CreateView):
     fields = '__all__'
 
 
-class InvestigationTypeDetailView(generic.DetailView):
+class InvestigationTypeDetailView(BaseGenericDetailView):
     model = InvestigationType
 
 
@@ -43,7 +70,7 @@ class InvestigationTypeDeleteView(generic.DeleteView):
 # Project #
 ###########
 
-class ProjectListView(generic.ListView):
+class ProjectListView(BaseGenericListView):
     model = Project
 
 
@@ -52,7 +79,7 @@ class ProjectCreateView(generic.CreateView):
     fields = '__all__'
 
 
-class ProjectDetailView(generic.DetailView):
+class ProjectDetailView(BaseGenericDetailView):
     model = Project
 
 
@@ -67,7 +94,7 @@ class ProjectDeleteView(generic.DeleteView):
 # Element Type #
 ################
 
-class ElementTypeListView(generic.ListView):
+class ElementTypeListView(BaseGenericListView):
     model = ElementType
 
 
@@ -90,7 +117,7 @@ class ElementTypeCreateView(generic.CreateView):
         return initial
 
 
-class ElementTypeDetailView(generic.DetailView):
+class ElementTypeDetailView(BaseGenericDetailView):
     model = ElementType
 
 
@@ -107,7 +134,7 @@ class ElementTypeDeleteView(generic.DeleteView):
 # Element Field Descriptor #
 ############################
 
-class ElementFieldDescriptorListView(generic.ListView):
+class ElementFieldDescriptorListView(BaseGenericListView):
     model = ElementFieldDescriptor
 
 
@@ -131,7 +158,7 @@ class ElementFieldDescriptorDeleteView(generic.DeleteView):
 # Element #
 ###########
 
-class ElementListView(generic.ListView):
+class ElementListView(BaseGenericListView):
     model = Element
 
 
@@ -155,7 +182,7 @@ class ElementDeleteView(generic.DeleteView):
 # Element Char Field Value #
 ############################
 
-class ElementCharFieldValueListView(generic.ListView):
+class ElementCharFieldValueListView(BaseGenericListView):
     model = ElementCharFieldValue
 
 
