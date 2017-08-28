@@ -47,7 +47,7 @@ class AbstractModel(models.Model):
             parent = getattr(self, foreign_key.name)
             parent_types.append({
                 'field_name': foreign_key.name,
-                'class': parent.field.model,
+                'class': parent.field.related_model,
             })
 
         return parent_types

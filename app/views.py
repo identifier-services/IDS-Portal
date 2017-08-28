@@ -23,6 +23,7 @@ class BaseGenericListView(generic.ListView):
         context['create_url'] = self.model.get_create_url()
         return context
 
+
 class BaseGenericDetailView(generic.DetailView):
     template_name = 'app/generic_detail.html'
     context_object_name = 'object'
@@ -34,29 +35,39 @@ class BaseGenericDetailView(generic.DetailView):
         context['type_name'] = verbose_name
         return context
 
+
 class BaseGenericCreateView(generic.CreateView):
     fields = '__all__'
+    template_name = 'app/generic_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(BaseGenericCreateView, self).get_context_data(**kwargs)
+        verbose_name = self.model._meta.verbose_name
+        context['page_name'] = 'Create %s' % verbose_name.title() 
+        context['type_name'] = verbose_name
+        return context
 
     def get_initial(self):
-        
         parent_id = self.request.GET.get('parent')
         initial = {}
 
         if parent_id:
-
             parent_types = self.model.get_parent_types()
-
-            import pdb; pdb.set_trace()
 
             #TODO: multiple parents
 
             if parent_types:
-                parent_type = parent_types[0]
-                field_name = parent_type['field_name']
-                parent_class = parent_type['class']
-                initial = {
-                    field_name: parent_class.objects.get(pk=parent_id)
-                }
+                try:
+                    parent_type = parent_types[0]
+                    field_name = parent_type['field_name']
+                    parent_class = parent_type['class']
+
+                    initial = {
+                        field_name: parent_class.objects.get(pk=parent_id)
+                    }
+                except Exception as e:
+                    # logger.debug(e)
+                    print e
 
         return initial
 
