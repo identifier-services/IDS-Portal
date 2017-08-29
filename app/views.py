@@ -42,8 +42,8 @@ class BaseGenericDetailView(generic.DetailView):
 
 
 class BaseGenericCreateView(generic.CreateView):
-    fields = '__all__'
     template_name = 'app/generic_form.html'
+    fields = '__all__'
 
     def get_context_data(self, **kwargs):
         context = super(BaseGenericCreateView, self).get_context_data(**kwargs)
@@ -81,6 +81,12 @@ class BaseGenericCreateView(generic.CreateView):
                     print e
 
         return initial
+
+
+class BaseGenericUpdateView(generic.UpdateView):
+    template_name = 'app/generic_form.html'
+    context_object_name = 'object'
+    fields = '__all__' 
 
 
 class BaseGenericDeleteView(generic.DeleteView):
@@ -128,15 +134,15 @@ class InvestigationTypeListView(BaseGenericListView):
 
 class InvestigationTypeCreateView(BaseGenericCreateView):
     model = InvestigationType
-    fields = '__all__'
 
 
 class InvestigationTypeDetailView(BaseGenericDetailView):
     model = InvestigationType
 
 
-class InvestigationTypeUpdateView(generic.UpdateView):
+class InvestigationTypeUpdateView(BaseGenericUpdateView):
     model = InvestigationType
+    fields = '__all__'
 
 
 class InvestigationTypeDeleteView(BaseGenericDeleteView):
@@ -159,7 +165,7 @@ class ProjectDetailView(BaseGenericDetailView):
     model = Project
 
 
-class ProjectUpdateView(generic.UpdateView):
+class ProjectUpdateView(BaseGenericUpdateView):
     model = Project
 
 
@@ -176,13 +182,12 @@ class ElementTypeListView(BaseGenericListView):
 
 class ElementTypeCreateView(BaseGenericCreateView):
     model = ElementType
-    fields = '__all__'
 
 class ElementTypeDetailView(BaseGenericDetailView):
     model = ElementType
 
 
-class ElementTypeUpdateView(generic.UpdateView):
+class ElementTypeUpdateView(BaseGenericUpdateView):
     model = ElementType
 
 
@@ -207,7 +212,7 @@ class ElementFieldDescriptorDetailView(BaseGenericDetailView):
     model = ElementFieldDescriptor
 
 
-class ElementFieldDescriptorUpdateView(generic.UpdateView):
+class ElementFieldDescriptorUpdateView(BaseGenericUpdateView):
     model = ElementFieldDescriptor
 
 
@@ -224,14 +229,13 @@ class ElementListView(BaseGenericListView):
 
 class ElementCreateView(BaseGenericCreateView):
     model = Element
-    fields = '__all__'
 
 
 class ElementDetailView(BaseGenericDetailView):
     model = Element
 
 
-class ElementUpdateView(generic.UpdateView):
+class ElementUpdateView(BaseGenericUpdateView):
     model = Element
 
 
@@ -248,14 +252,13 @@ class ElementCharFieldValueListView(BaseGenericListView):
 
 class ElementCharFieldValueCreateView(BaseGenericCreateView):
     model = ElementCharFieldValue
-    fields = '__all__'
 
 
 class ElementCharFieldValueDetailView(BaseGenericDetailView):
     model = ElementCharFieldValue
 
 
-class ElementCharFieldValueUpdateView(generic.UpdateView):
+class ElementCharFieldValueUpdateView(BaseGenericUpdateView):
     model = ElementCharFieldValue
 
 
@@ -273,14 +276,13 @@ class ElementTextFieldValueListView(BaseGenericListView):
 
 class ElementTextFieldValueCreateView(BaseGenericCreateView):
     model = ElementTextFieldValue
-    fields = '__all__'
 
 
 class ElementTextFieldValueDetailView(BaseGenericDetailView):
     model = ElementTextFieldValue
 
 
-class ElementTextFieldValueUpdateView(generic.UpdateView):
+class ElementTextFieldValueUpdateView(BaseGenericUpdateView):
     model = ElementTextFieldValue
 
 
@@ -297,14 +299,13 @@ class ElementDateFieldValueListView(BaseGenericListView):
 
 class ElementDateFieldValueCreateView(BaseGenericCreateView):
     model = ElementDateFieldValue
-    fields = '__all__'
 
 
 class ElementDateFieldValueDetailView(BaseGenericDetailView):
     model = ElementDateFieldValue
 
 
-class ElementDateFieldValueUpdateView(generic.UpdateView):
+class ElementDateFieldValueUpdateView(BaseGenericUpdateView):
     model = ElementDateFieldValue
 
 
@@ -321,14 +322,13 @@ class ElementUrlFieldValueListView(BaseGenericListView):
 
 class ElementUrlFieldValueCreateView(BaseGenericCreateView):
     model = ElementUrlFieldValue
-    fields = '__all__'
 
 
 class ElementUrlFieldValueDetailView(BaseGenericDetailView):
     model = ElementUrlFieldValue
 
 
-class ElementUrlFieldValueUpdateView(generic.UpdateView):
+class ElementUrlFieldValueUpdateView(BaseGenericUpdateView):
     model = ElementUrlFieldValue
 
 
