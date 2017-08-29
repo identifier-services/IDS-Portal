@@ -118,24 +118,10 @@ class AbstractModel(Base, models.Model):
     """
 
     name = models.CharField(max_length=200, 
-        help_text="Enter a name.", default="N/A")
+        help_text="Enter a name.", blank=True)
 
     description = models.TextField(max_length=1000, 
         help_text="Enter a description.", blank=True)
-
-    #def __init__(self, *args, **kwargs):
-    #    super(AbstractModel, self).__init__(*args, **kwargs)
-
-        # this is really hacky, for one reason, because it doesn't
-        # set the new help_text until after the first time the
-        # user sees it. leaving it for now though...
-
-    #    verbose_name = self._meta.verbose_name
-    #    help_text = 'Enter a name for this %s.' % verbose_name
-    #    self._meta.get_field('name').help_text = help_text
-
-    #    help_text = 'Enter a description for this %s.' % verbose_name
-    #    self._meta.get_field('description').help_text = help_text
 
     class Meta:
         abstract = True
@@ -171,32 +157,43 @@ class Element(AbstractModel):
     project = models.ForeignKey(Project, on_delete=models.CASCADE) 
 
 
-# class ElementFieldDescriptor(models.Model):
-class ElementFieldDescriptor(AbstractModel):
+class ElementFieldDescriptor(Base, models.Model):
     """Model describes an attribute of an element."""
 
     #############
     # Attributes
     #############
 
-    # label = models.CharField(max_length=200, 
-    #     help_text="Enter a label for this field.")
-    # help_text = models.TextField(max_length=1000, 
-    #     help_text="Enter help text for this field.",
-    #     blank=True)
-    #TODO: value_type = models. ...
+    label = models.CharField(max_length=200, 
+        help_text="Enter a label for this field.", blank=True)
 
-    # def __init__(self, *args, **kwargs):
-    #     super(ElementFieldDescriptor, self).__init__(*args, **kwargs)
-    #     fields = filter(lambda x: (not x.auto_created and not x.related_model),
-    #         self._meta.get_fields())
-    #     for field in self._meta.get_fields():
-    #         if field.name == 'name':
-    #             field.verbose_name = 'label'
-    #         elif field.name == 'description':
-    #             field.verbose_name = 'help text'
+    help_text = models.TextField(max_length=1000, 
+        help_text="Enter help text for this field.",
+        blank=True)
 
-    required = models.BooleanField(default=False, help_text="Is this a required field?")
+    CHAR = 'CHR'
+    TEXT = 'TXT'
+    INT = 'INT'
+    FLOAT = 'FLT'
+    DATE = 'MDY'
+    URL = 'URL'
+    REL = 'REL'
+    VALUE_TYPE_CHOICES = (
+        (CHAR, 'short text'),
+        (TEXT, 'long text'),
+        (INT, 'integer'),
+        (FLOAT, 'real number'),
+        (DATE, 'date'),
+        (REL, 'relation'),
+    )
+
+    value_type = models.CharField(max_length=3,
+        choices=VALUE_TYPE_CHOICES,
+        default=CHAR,
+    )
+
+    required = models.BooleanField(default=False, 
+        help_text="Is this a required field?")
 
     ###############
     # Foreign Keys
@@ -208,11 +205,8 @@ class ElementFieldDescriptor(AbstractModel):
     # Methods
     ##########
 
-    # def get_absolute_url(self):
-    #     return reverse('app:element_field_descriptor_detail', args=[str(self.id)])
-
-    # def __str__(self):
-    #     return self.label
+    def __str__(self):
+        return self.label
 
     class Meta:
         verbose_name = "element field descriptor"
