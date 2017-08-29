@@ -15,7 +15,11 @@ def snake(name):
 
 
 class AbstractModel(models.Model):
-    """Abstract class for various types of element field values"""
+    """
+    Abstract model class, provides standard name and description fields, as
+    well as methods return related objects. Subclasses will need to specify 
+    foreign key fields.
+    """
 
     name = models.CharField(max_length=200, 
         help_text="Enter a name.")
@@ -128,6 +132,9 @@ class ElementType(AbstractModel):
 
     investigation_type = models.ForeignKey(InvestigationType, on_delete=models.CASCADE) 
 
+    class Meta:
+        verbose_name = "element type"
+
 
 class Element(AbstractModel):
     """Model representing an individual element."""
@@ -167,6 +174,9 @@ class ElementFieldDescriptor(models.Model):
     def __str__(self):
         return self.label
 
+    class Meta:
+        verbose_name = "element field descriptor"
+
 
 class AbstractElementFieldValue(models.Model):
     """Abstract class for various types of element field values"""
@@ -203,23 +213,7 @@ class AbstractElementFieldValue(models.Model):
 
 
 class ElementCharFieldValue(AbstractElementFieldValue):
-    """Element CharField attribute value."""
-
-    #############
-    # Attributes
-    #############
-
-    # inherited
-
-    ###############
-    # Foreign Keys
-    ###############
-
-    # Element - inherited
-
-    ##########
-    # Methods
-    ##########
+    """Element char field attribute value."""
 
     def get_absolute_url(self):
         return reverse('app:element_char_field_value_detail', args=[str(self.id)])
@@ -231,96 +225,26 @@ class ElementCharFieldValue(AbstractElementFieldValue):
     # Meta
     #######
 
-    # N/A
-
-    pass
+    class Meta:
+        verbose_name = 'char field value'
 
 
 class ElementTextFieldValue(AbstractElementFieldValue):
-    """Element CharField attribute value."""
+    """Element text field attribute value."""
 
-    #############
-    # Attributes
-    #############
-
-    value = models.TextField(max_length=1000, blank=True)
-
-    ###############
-    # Foreign Keys
-    ###############
-
-    # Element - inherited
-
-    ##########
-    # Methods
-    ##########
-
-    # N/A
-
-    #######
-    # Meta
-    #######
-
-    # N/A
-
-    pass
+    class Meta:
+        verbose_name = 'text value'
 
 
 class ElementDateFieldValue(AbstractElementFieldValue):
-    """Element CharField attribute value."""
+    """Element date field attribute value."""
 
-    #############
-    # Attributes
-    #############
-
-    # N/A
-
-    ###############
-    # Foreign Keys
-    ###############
-
-    # Element - inherited
-
-    ##########
-    # Methods
-    ##########
-
-    # N/A
-
-    #######
-    # Meta
-    #######
-
-    # N/A
-
-    pass
+    class Meta:
+        verbose_name = 'date'
 
 
 class ElementURLFieldValue(AbstractElementFieldValue):
     """Element CharField attribute value."""
 
-    #############
-    # Attributes
-    #############
-
-    # N/A
-
-    ###############
-    # Foreign Keys
-    ###############
-
-    # Element - inherited
-
-    ##########
-    # Methods
-    ##########
-
-    # N/A
-
-    #######
-    # Meta
-    #######
-
-    # N/A
-
-    pass
+    class Meta:
+        verbose_name = 'url'

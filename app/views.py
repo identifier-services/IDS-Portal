@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.shortcuts import render
+from django.urls import reverse_lazy
 from django.views import generic
 
 from .models import InvestigationType, Project, ElementType, ElementFieldDescriptor, Element, ElementCharFieldValue
@@ -58,7 +59,8 @@ class BaseGenericCreateView(generic.CreateView):
 
             if parent_types:
                 try:
-                    parent_type = parent_types[0]
+                    # just grab the first parent until we fix this
+                    parent_type = next(iter(parent_type))
                     field_name = parent_type['field_name']
                     parent_class = parent_type['class']
 
@@ -70,6 +72,34 @@ class BaseGenericCreateView(generic.CreateView):
                     print e
 
         return initial
+
+
+class BaseGenericDeleteView(generic.DeleteView):
+    template_name = 'app/generic_delete.html'
+    context_object_name = 'object'
+    success_url = reverse_lazy('app:index')
+
+    def get_context_data(self, **kwargs):
+        context = super(BaseGenericDeleteView, self).get_context_data(**kwargs)
+        verbose_name = self.model._meta.verbose_name
+        context['type_name'] = verbose_name
+
+        # set the success_url to the parent, if there is one.
+        # this is hacky, but then the whole thing is
+        context_object = context['object']
+        parent_rels = context_object.get_parent_relations()
+        if parent_rels:
+            
+            # just get the first parent
+            parent_rel = next(iter(parent_rels))
+
+            try:
+                success_url = reverse('%s_detail' % parent_rel['field_name'])
+            except Exception as e:
+                # logger.debug(e)
+                print e
+
+        return context
 
 #############
 # Home Page #
@@ -100,8 +130,9 @@ class InvestigationTypeUpdateView(generic.UpdateView):
     model = InvestigationType
 
 
-class InvestigationTypeDeleteView(generic.DeleteView):
+class InvestigationTypeDeleteView(BaseGenericDeleteView):
     model = InvestigationType
+    # success_url = reverse('app:index')
 
 ###########
 # Project #
@@ -123,7 +154,7 @@ class ProjectUpdateView(generic.UpdateView):
     model = Project
 
 
-class ProjectDeleteView(generic.DeleteView):
+class ProjectDeleteView(BaseGenericDeleteView):
     model = Project
 
 ################
@@ -161,7 +192,7 @@ class ElementTypeUpdateView(generic.UpdateView):
     model = ElementType
 
 
-class ElementTypeDeleteView(generic.DeleteView):
+class ElementTypeDeleteView(BaseGenericDeleteView):
     model = ElementType
 
 
