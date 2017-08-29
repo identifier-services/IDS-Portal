@@ -201,6 +201,23 @@ class ElementFieldDescriptor(Base, models.Model):
 
     element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
 
+    #############
+    # Properties    
+    #############
+
+    @property
+    def value_type_map(self):
+        mapping = {                                                        
+            self.CHAR: ElementCharFieldValue,
+            self.TEXT: ElementTextFieldValue,
+            self.INT: ElementIntFieldValue,
+            self.FLOAT: ElementFloatFieldValue,
+            self.DATE: ElementDateFieldValue,
+            self.URL: ElementUrlFieldValue,
+            self.REL: ElementCharFieldValue, # TODO: add rel field 
+        } 
+        return mapping
+
     ##########
     # Methods
     ##########
@@ -215,25 +232,17 @@ class ElementFieldDescriptor(Base, models.Model):
 class AbstractElementFieldValue(Base, models.Model):
     """Abstract class for various types of element field values"""
 
-    #############
-    # Attributes
-    #############
-
-    value = models.CharField(max_length=200, blank=True, null=True)
-
     ###############
     # Foreign Keys
     ###############
 
     element = models.ForeignKey(Element, on_delete=models.CASCADE)
-    element_field_descriptor = models.ForeignKey(ElementFieldDescriptor, on_delete=models.CASCADE, null=True)
+    element_field_descriptor = models.ForeignKey(ElementFieldDescriptor, 
+        on_delete=models.CASCADE, null=True)
 
     ##########
     # Methods
     ##########
-
-    def get_parent_type(self):
-        return None
 
     def __str__(self):
         return str(self.value)
@@ -249,29 +258,46 @@ class AbstractElementFieldValue(Base, models.Model):
 class ElementCharFieldValue(AbstractElementFieldValue):
     """Element char field attribute value."""
 
-    def get_absolute_url(self):
-        return reverse('app:element_char_field_value_detail', args=[str(self.id)])
+    value = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self):
         return str(self.value)
 
-    #######
-    # Meta
-    #######
-
     class Meta:
-        verbose_name = 'char field value'
+        verbose_name = 'short text'
 
 
 class ElementTextFieldValue(AbstractElementFieldValue):
     """Element text field attribute value."""
 
+    value = models.TextField(blank=True, null=True)
+
     class Meta:
-        verbose_name = 'text value'
+        verbose_name = 'long text'
+
+
+class ElementIntFieldValue(AbstractElementFieldValue):
+    """Element CharField attribute value."""
+
+    value = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'integer'
+
+
+class ElementFloatFieldValue(AbstractElementFieldValue):
+    """Element CharField attribute value."""
+
+    value = models.FloatField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'float'
 
 
 class ElementDateFieldValue(AbstractElementFieldValue):
     """Element date field attribute value."""
+
+    value = models.DateField(auto_now=False, auto_now_add=False, blank=True, null=True)
 
     class Meta:
         verbose_name = 'date'
@@ -280,5 +306,16 @@ class ElementDateFieldValue(AbstractElementFieldValue):
 class ElementUrlFieldValue(AbstractElementFieldValue):
     """Element CharField attribute value."""
 
+    value = models.URLField(max_length=500, blank=True, null=True)
+
     class Meta:
         verbose_name = 'url'
+
+
+# class ElementRelFieldValue(AbstractElementFieldValue):
+#     """Element CharField attribute value."""
+# 
+#     value = models.CharField(max_length=200, blank=True, null=True)
+# 
+#     class Meta:
+#         verbose_name = 'url'

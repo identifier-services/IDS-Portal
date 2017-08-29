@@ -208,6 +208,64 @@ urlpatterns = [
         name='element_text_field_value_delete'),
 
     ############################
+    # element int field value #
+    ############################
+
+    # list
+    url(r'^element-int-field-values/$', 
+        views.ElementIntFieldValueListView.as_view(), 
+        name='element_int_field_value_list'),
+    
+    # create
+    url(r'^element-int-field-value/create/$', 
+        views.ElementIntFieldValueCreateView.as_view(), 
+        name='element_int_field_value_create'),
+    
+    # detail
+    url(r'^element-int-field-value/(?P<pk>\d+)$', 
+        views.ElementIntFieldValueDetailView.as_view(), 
+        name='element_int_field_value_detail'),
+    
+    # update
+    url(r'^element-int-field-value/(?P<pk>\d+)/update/$', 
+        views.ElementIntFieldValueUpdateView.as_view(), 
+        name='element_int_field_value_update'),
+    
+    # delete
+    url(r'^element-int-field-value/(?P<pk>\d+)/delete/$', 
+        views.ElementIntFieldValueDeleteView.as_view(), 
+        name='element_int_field_value_delete'),
+
+    ############################
+    # element float field value #
+    ############################
+
+    # list
+    url(r'^element-float-field-values/$', 
+        views.ElementFloatFieldValueListView.as_view(), 
+        name='element_float_field_value_list'),
+    
+    # create
+    url(r'^element-float-field-value/create/$', 
+        views.ElementFloatFieldValueCreateView.as_view(), 
+        name='element_float_field_value_create'),
+    
+    # detail
+    url(r'^element-float-field-value/(?P<pk>\d+)$', 
+        views.ElementFloatFieldValueDetailView.as_view(), 
+        name='element_float_field_value_detail'),
+    
+    # update
+    url(r'^element-float-field-value/(?P<pk>\d+)/update/$', 
+        views.ElementFloatFieldValueUpdateView.as_view(), 
+        name='element_float_field_value_update'),
+    
+    # delete
+    url(r'^element-float-field-value/(?P<pk>\d+)/delete/$', 
+        views.ElementFloatFieldValueDeleteView.as_view(), 
+        name='element_float_field_value_delete'),
+
+    ############################
     # element date field value #
     ############################
 

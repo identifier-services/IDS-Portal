@@ -7,8 +7,8 @@ from django.views import generic
 
 from .models import (InvestigationType, Project, ElementType, 
     ElementFieldDescriptor, Element, ElementCharFieldValue,
-    ElementTextFieldValue, ElementDateFieldValue, ElementUrlFieldValue)
-
+    ElementTextFieldValue, ElementIntFieldValue, ElementFloatFieldValue, 
+    ElementDateFieldValue, ElementUrlFieldValue)
 
 ##############
 # Base Views #
@@ -207,19 +207,13 @@ class ElementFieldDescriptorCreateView(BaseGenericCreateView):
     fields = '__all__'
 
 
-# class ElementFieldDescriptorDetailView(BaseGenericDetailView):
-#     model = ElementFieldDescriptor
-#     fields = 'label'
-
-
 class ElementFieldDescriptorDetailView(generic.DetailView):
     model = ElementFieldDescriptor
     template_name = 'app/field_descriptor_detail.html'
-    context_object_name = 'descriptor'
 
     def get_context_data(self, **kwargs):
         context = super(ElementFieldDescriptorDetailView, self).get_context_data(**kwargs)
-        descriptor = context['descriptor']
+        descriptor = context['object']
 
         try:
             context['value_type'] = filter(
@@ -251,8 +245,35 @@ class ElementCreateView(BaseGenericCreateView):
     model = Element
 
 
-class ElementDetailView(BaseGenericDetailView):
+class ElementDetailView(generic.DetailView):
     model = Element
+    template_name = 'app/element_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ElementDetailView, self).get_context_data(**kwargs)
+        verbose_name = self.model._meta.verbose_name
+        context['verbose_name'] = verbose_name.title() 
+        context['type_name'] = verbose_name.replace(' ', '_')
+
+        context_object = context['object']
+        descriptors = context_object.element_type.elementfielddescriptor_set.all()
+
+        values = []
+        for descriptor in descriptors:
+            value_type = descriptor.value_type
+            type_name = descriptor._meta.verbose_name.replace(' ', '_')
+            type_id = descriptor.id
+            field_class = descriptor.value_type_map[value_type]
+            values.append({
+                'label': descriptor.label,
+                'help_text': descriptor.help_text,
+                'type_name': type_name,
+                'type_id': type_id,
+                'create_url': field_class.get_create_url()
+            })
+        context['values'] = values
+
+        return context
 
 
 class ElementUpdateView(BaseGenericUpdateView):
@@ -308,6 +329,52 @@ class ElementTextFieldValueUpdateView(BaseGenericUpdateView):
 
 class ElementTextFieldValueDeleteView(BaseGenericDeleteView):
     model = ElementTextFieldValue
+
+############################
+# Element Int Field Value #
+############################
+
+class ElementIntFieldValueListView(BaseGenericListView):
+    model = ElementIntFieldValue
+
+
+class ElementIntFieldValueCreateView(BaseGenericCreateView):
+    model = ElementIntFieldValue
+
+
+class ElementIntFieldValueDetailView(BaseGenericDetailView):
+    model = ElementIntFieldValue
+
+
+class ElementIntFieldValueUpdateView(BaseGenericUpdateView):
+    model = ElementIntFieldValue
+
+
+class ElementIntFieldValueDeleteView(BaseGenericDeleteView):
+    model = ElementIntFieldValue
+
+############################
+# Element Float Field Value #
+############################
+
+class ElementFloatFieldValueListView(BaseGenericListView):
+    model = ElementFloatFieldValue
+
+
+class ElementFloatFieldValueCreateView(BaseGenericCreateView):
+    model = ElementFloatFieldValue
+
+
+class ElementFloatFieldValueDetailView(BaseGenericDetailView):
+    model = ElementFloatFieldValue
+
+
+class ElementFloatFieldValueUpdateView(BaseGenericUpdateView):
+    model = ElementFloatFieldValue
+
+
+class ElementFloatFieldValueDeleteView(BaseGenericDeleteView):
+    model = ElementFloatFieldValue
 
 ############################
 # Element Date Field Value #
