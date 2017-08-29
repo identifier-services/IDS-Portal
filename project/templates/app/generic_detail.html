@@ -1,19 +1,14 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-    <h2>{{ page_name }}</h2>
-
-    <ul>
-        {% for field in object.get_fields %}
-            <p><b>{{ field.label }}:</b> {{ field.value }}</p>
-        {% endfor %}
-    </ul>
+    <h2>{{ verbose_name}} Detail</h2>
 
     {% if object.get_parent_relations %}
         <hr/>
+        <h3>From:</h3>
         <ul>
             {% for parent_rel in object.get_parent_relations %}
-                <li>{{ parent_rel.verbose_name|title }}: 
+                <li><b>{{ parent_rel.verbose_name|title }}:</b> 
                     <a href="{{ parent_rel.object.get_absolute_url }}">
                         {{ parent_rel.object.name }}
                     </a>
@@ -22,11 +17,20 @@
         </ul>
     {% endif %}
 
+    <hr/>
+    <h3>Attributes:</h3>
+    <ul>
+        {% for field in object.get_fields %}
+            <li><b>{{ field.label }}:</b> {{ field.value }}</li>
+        {% endfor %}
+    </ul>
+
     {% if object.get_child_relations %}
         <hr/>
+        <h3>Related:</h3>
         <ul>
             {% for child_rel in object.get_child_relations %}
-                <li>{{ child_rel.type_name|title }}s:
+                <li><b>{{ child_rel.type_name|title }}s:</b>
                     <ul>
                         {% if child_rel.objects %}
                             {% for child in child_rel.objects %}
@@ -35,18 +39,18 @@
                         {% else %}
                             <p>There are no {{ child_rel.type_name }}s for this {{ type_name }}.</p>
                         {% endif %}
-                        <p>
-                            <a href="{{ child_rel.create_url }}?parent={{ type_name}}:{{ object.id }}">
-                                Add {{ child_rel.type_name }}
-                            </a>
-                        </p>
                     </ul>
+                    <p>
+                        <a href="{{ child_rel.create_url }}?parent={{ type_name}}:{{ object.id }}">
+                            Add {{ child_rel.type_name|title }}
+                        </a>
+                    </p>
                 </li>
             {% endfor %}
         </ul>
         <hr/>
     {% endif %}
 
-    <a href="{{ object.get_absolute_url }}/update">Edit {{ type_name }}</a>
-    <a href="{{ object.get_absolute_url }}/delete">Delete {{ type_name }}</a>
+    <a href="{{ object.get_absolute_url }}/update">Edit {{ verbose_name }}</a>
+    <a href="{{ object.get_absolute_url }}/delete">Delete {{ verbose_name }}</a>
 {% endblock %}

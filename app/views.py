@@ -21,8 +21,8 @@ class BaseGenericListView(generic.ListView):
     def get_context_data(self, **kwargs):
         context = super(BaseGenericListView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
-        context['page_name'] = '%s List' % verbose_name.title() 
-        context['type_name'] = verbose_name
+        context['verbose_name'] = verbose_name.title()
+        context['type_name'] = verbose_name.replace(' ', '_')
         context['create_url'] = self.model.get_create_url()
         return context
 
@@ -34,8 +34,7 @@ class BaseGenericDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(BaseGenericDetailView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
-        context['page_name'] = '%s Detail' % verbose_name.title() 
-        # TODO: do this better (no replace)
+        context['verbose_name'] = verbose_name.title() 
         context['type_name'] = verbose_name.replace(' ', '_')
 
         return context
@@ -48,8 +47,8 @@ class BaseGenericCreateView(generic.CreateView):
     def get_context_data(self, **kwargs):
         context = super(BaseGenericCreateView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
-        context['page_name'] = 'Create %s' % verbose_name.title() 
-        context['type_name'] = verbose_name
+        context['verbose_name'] = verbose_name.title()
+        context['type_name'] = verbose_name.replace(' ', '_')
         return context
 
     def get_initial(self):
@@ -208,8 +207,29 @@ class ElementFieldDescriptorCreateView(BaseGenericCreateView):
     fields = '__all__'
 
 
-class ElementFieldDescriptorDetailView(BaseGenericDetailView):
+# class ElementFieldDescriptorDetailView(BaseGenericDetailView):
+#     model = ElementFieldDescriptor
+#     fields = 'label'
+
+
+class ElementFieldDescriptorDetailView(generic.DetailView):
     model = ElementFieldDescriptor
+    template_name = 'app/field_descriptor_detail.html'
+    context_object_name = 'descriptor'
+
+    def get_context_data(self, **kwargs):
+        context = super(ElementFieldDescriptorDetailView, self).get_context_data(**kwargs)
+        descriptor = context['descriptor']
+
+        try:
+            context['value_type'] = filter(
+                lambda x, y=descriptor.value_type: x[0]==y, 
+                descriptor.VALUE_TYPE_CHOICES)[0][1]
+        except Exception as e:
+            # logger.debug(e)
+            print e
+
+        return context
 
 
 class ElementFieldDescriptorUpdateView(BaseGenericUpdateView):

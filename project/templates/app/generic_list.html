@@ -1,7 +1,7 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-    <h1>{{ page_name }}</h1>
+    <h1>{{ verbose_name }} List</h1>
 
     <ul>
         {% if object_list %}
@@ -11,9 +11,9 @@
                 </li>
             {% endfor %}
         {% else %}
-            <p>There are no {{ type_name }}s.</p>
+            <p>There are no {{ verbose_name }}s.</p>
         {% endif %}
-        <p><a href="{{ create_url }}">Add new {{ type_name }}</a></p>
+        <p><a href="{{ create_url }}">Add new {{ verbose_name }}</a></p>
     </ul>
 
 {% endblock %}

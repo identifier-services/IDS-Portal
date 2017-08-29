@@ -19,28 +19,6 @@ class Base(object):
     Provides methods for various abstract model classes.
     """ # I think it doesn't follow good practice through.
 
-    def __init__(self, *args, **kwargs):
-        super(Base, self).__init__(*args, **kwargs)
-
-        # this is really hacky, for one reason, because it doesn't
-        # set the new help_text until after the first time the
-        # user sees it. leaving it for now though...
-
-        verbose_name = self._meta.verbose_name
-        help_text = 'Enter a name for this %s.' % verbose_name
-        try:
-            self._meta.get_field('name').help_text = help_text
-        except Exception as e:
-            # logger.debug(e)
-            print e
-
-        help_text = 'Enter a description for this %s.' % verbose_name
-        try:
-            self._meta.get_field('description').help_text = help_text
-        except Exception as e:
-            # logger.debug(e)
-            print e
-
     @classmethod
     def get_parent_types(self):
         fields = self._meta.get_fields()
@@ -116,6 +94,28 @@ class AbstractModel(Base, models.Model):
     well as methods return related objects. Subclasses will need to specify 
     foreign key fields.
     """
+
+    def __init__(self, *args, **kwargs):
+        super(AbstractModel, self).__init__(*args, **kwargs)
+
+        # this is really hacky, for one reason, because it doesn't
+        # set the new help_text until after the first time the
+        # user sees it. leaving it for now though...
+
+        verbose_name = self._meta.verbose_name
+        help_text = 'Enter a name for this %s.' % verbose_name
+        try:
+            self._meta.get_field('name').help_text = help_text
+        except Exception as e:
+            # logger.debug(e)
+            print e
+
+        help_text = 'Enter a description for this %s.' % verbose_name
+        try:
+            self._meta.get_field('description').help_text = help_text
+        except Exception as e:
+            # logger.debug(e)
+            print e
 
     name = models.CharField(max_length=200, 
         help_text="Enter a name.", blank=True)

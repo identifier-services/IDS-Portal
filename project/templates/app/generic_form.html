@@ -2,13 +2,15 @@
 
 {% block content %}
 
-<h2>{{ page_name }}</h2>
+<h2>{{ verbose_name }}</h2>
 
 <form action="" method="post">
     {% csrf_token %}
+    <hr/>
     <table>
     {{ form.as_table }}
     </table>
+    <hr/>
     <input type="submit" value="Submit" />
 </form>
 
