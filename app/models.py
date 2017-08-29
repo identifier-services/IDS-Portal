@@ -14,21 +14,13 @@ def snake(name):
     return re.sub('(?!^)([A-Z]+)', r'_\1', name).lower()
 
 
-class AbstractModel(models.Model):
+class Base(object):
     """
-    Abstract model class, provides standard name and description fields, as
-    well as methods return related objects. Subclasses will need to specify 
-    foreign key fields.
-    """
-
-    name = models.CharField(max_length=200, 
-        help_text="Enter a name.")
-
-    description = models.TextField(max_length=1000, 
-        help_text="Enter a description.", blank=True)
+    Provides methods for various abstract model classes.
+    """ # I think it doesn't follow good practice through.
 
     def __init__(self, *args, **kwargs):
-        super(AbstractModel, self).__init__(*args, **kwargs)
+        super(Base, self).__init__(*args, **kwargs)
 
         # this is really hacky, for one reason, because it doesn't
         # set the new help_text until after the first time the
@@ -69,16 +61,17 @@ class AbstractModel(models.Model):
 
         return parents
 
-
     def get_child_relations(self):
         fields = self._meta.get_fields()
         many_to_ones = filter(lambda x: type(x) == models.ManyToOneRel, fields)
         child_relations = []
         for many_to_one in many_to_ones:        
-            rm = getattr(self,'%s_set' % many_to_one.name)
+            # rm = getattr(self,'%s_set' % many_to_one.name)
+            rm = getattr(self, many_to_one.get_accessor_name())
+
             child_relations.append({
-                'type_name': many_to_one.name,
-                'objects': rm.values(),
+                'type_name': many_to_one.related_model._meta.verbose_name,
+                'objects': rm.all(),
                 'create_url': many_to_one.related_model.get_create_url(),
             })
 
@@ -108,6 +101,34 @@ class AbstractModel(models.Model):
 
     def __str__(self):
         return self.name 
+
+
+class AbstractModel(Base, models.Model):
+    """
+    Abstract model class, provides standard name and description fields, as
+    well as methods return related objects. Subclasses will need to specify 
+    foreign key fields.
+    """
+
+    name = models.CharField(max_length=200, 
+        help_text="Enter a name.", default="N/A")
+
+    description = models.TextField(max_length=1000, 
+        help_text="Enter a description.", blank=True)
+
+    #def __init__(self, *args, **kwargs):
+    #    super(AbstractModel, self).__init__(*args, **kwargs)
+
+        # this is really hacky, for one reason, because it doesn't
+        # set the new help_text until after the first time the
+        # user sees it. leaving it for now though...
+
+    #    verbose_name = self._meta.verbose_name
+    #    help_text = 'Enter a name for this %s.' % verbose_name
+    #    self._meta.get_field('name').help_text = help_text
+
+    #    help_text = 'Enter a description for this %s.' % verbose_name
+    #    self._meta.get_field('description').help_text = help_text
 
     class Meta:
         abstract = True
@@ -143,19 +164,31 @@ class Element(AbstractModel):
     project = models.ForeignKey(Project, on_delete=models.CASCADE) 
 
 
-class ElementFieldDescriptor(models.Model):
+# class ElementFieldDescriptor(models.Model):
+class ElementFieldDescriptor(AbstractModel):
     """Model describes an attribute of an element."""
 
     #############
     # Attributes
     #############
 
-    label = models.CharField(max_length=200, 
-        help_text="Enter a label for this field.")
-    help_text = models.TextField(max_length=1000, 
-        help_text="Enter help text for this field.",
-        blank=True)
+    # label = models.CharField(max_length=200, 
+    #     help_text="Enter a label for this field.")
+    # help_text = models.TextField(max_length=1000, 
+    #     help_text="Enter help text for this field.",
+    #     blank=True)
     #TODO: value_type = models. ...
+
+    # def __init__(self, *args, **kwargs):
+    #     super(ElementFieldDescriptor, self).__init__(*args, **kwargs)
+    #     fields = filter(lambda x: (not x.auto_created and not x.related_model),
+    #         self._meta.get_fields())
+    #     for field in self._meta.get_fields():
+    #         if field.name == 'name':
+    #             field.verbose_name = 'label'
+    #         elif field.name == 'description':
+    #             field.verbose_name = 'help text'
+
     required = models.BooleanField(default=False, help_text="Is this a required field?")
 
     ###############
@@ -168,17 +201,17 @@ class ElementFieldDescriptor(models.Model):
     # Methods
     ##########
 
-    def get_absolute_url(self):
-        return reverse('app:element_field_descriptor_detail', args=[str(self.id)])
+    # def get_absolute_url(self):
+    #     return reverse('app:element_field_descriptor_detail', args=[str(self.id)])
 
-    def __str__(self):
-        return self.label
+    # def __str__(self):
+    #     return self.label
 
     class Meta:
         verbose_name = "element field descriptor"
 
 
-class AbstractElementFieldValue(models.Model):
+class AbstractElementFieldValue(Base, models.Model):
     """Abstract class for various types of element field values"""
 
     #############
@@ -243,7 +276,7 @@ class ElementDateFieldValue(AbstractElementFieldValue):
         verbose_name = 'date'
 
 
-class ElementURLFieldValue(AbstractElementFieldValue):
+class ElementUrlFieldValue(AbstractElementFieldValue):
     """Element CharField attribute value."""
 
     class Meta:

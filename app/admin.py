@@ -46,6 +46,6 @@ class ElementDateFieldValueAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(ElementURLFieldValue)
-class ElementURLFieldValueAdmin(admin.ModelAdmin):
+@admin.register(ElementUrlFieldValue)
+class ElementUrlFieldValueAdmin(admin.ModelAdmin):
     pass

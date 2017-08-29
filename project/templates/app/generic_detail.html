@@ -14,7 +14,7 @@
         <ul>
             {% for parent_rel in object.get_parent_relations %}
                 <li>{{ parent_rel.verbose_name|title }}: 
-                    <a href="{{ parent.object.get_absolute_url }}">
+                    <a href="{{ parent_rel.object.get_absolute_url }}">
                         {{ parent_rel.object.name }}
                     </a>
                 </li>
@@ -29,8 +29,8 @@
                 <li>{{ child_rel.type_name|title }}s:
                     <ul>
                         {% if child_rel.objects %}
-                            {% for child in child_rel.values %}
-                                {{ child }}
+                            {% for child in child_rel.objects %}
+                                <li><a href="{{ child.get_absolute_url }}">{{ child }}</a></li>
                             {% endfor %}
                         {% else %}
                             <p>There are no {{ child_rel.type_name }}s for this {{ type_name }}.</p>

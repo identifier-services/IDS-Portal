@@ -5,7 +5,9 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import generic
 
-from .models import InvestigationType, Project, ElementType, ElementFieldDescriptor, Element, ElementCharFieldValue
+from .models import (InvestigationType, Project, ElementType, 
+    ElementFieldDescriptor, Element, ElementCharFieldValue,
+    ElementTextFieldValue, ElementDateFieldValue, ElementUrlFieldValue)
 
 
 ##############
@@ -117,7 +119,7 @@ class InvestigationTypeListView(BaseGenericListView):
     model = InvestigationType
 
 
-class InvestigationTypeCreateView(generic.CreateView):
+class InvestigationTypeCreateView(BaseGenericCreateView):
     model = InvestigationType
     fields = '__all__'
 
@@ -165,24 +167,9 @@ class ElementTypeListView(BaseGenericListView):
     model = ElementType
 
 
-class ElementTypeCreateView(generic.CreateView):
+class ElementTypeCreateView(BaseGenericCreateView):
     model = ElementType
     fields = '__all__'
-
-    def get_initial(self):
-        
-        print 'parent type: %s' % self.model.get_parent_type()
-
-        parent_id = self.request.GET.get('parent')
-        initial = {}
-
-        if parent_id:
-            initial = {
-                'investigation_type': InvestigationType.objects.get(pk=parent_id)
-            }
-
-        return initial
-
 
 class ElementTypeDetailView(BaseGenericDetailView):
     model = ElementType
@@ -196,7 +183,6 @@ class ElementTypeDeleteView(BaseGenericDeleteView):
     model = ElementType
 
 
-
 ############################
 # Element Field Descriptor #
 ############################
@@ -205,12 +191,12 @@ class ElementFieldDescriptorListView(BaseGenericListView):
     model = ElementFieldDescriptor
 
 
-class ElementFieldDescriptorCreateView(generic.CreateView):
+class ElementFieldDescriptorCreateView(BaseGenericCreateView):
     model = ElementFieldDescriptor
     fields = '__all__'
 
 
-class ElementFieldDescriptorDetailView(generic.DetailView):
+class ElementFieldDescriptorDetailView(BaseGenericDetailView):
     model = ElementFieldDescriptor
 
 
@@ -218,7 +204,7 @@ class ElementFieldDescriptorUpdateView(generic.UpdateView):
     model = ElementFieldDescriptor
 
 
-class ElementFieldDescriptorDeleteView(generic.DeleteView):
+class ElementFieldDescriptorDeleteView(BaseGenericDeleteView):
     model = ElementFieldDescriptor
 
 ###########
@@ -229,12 +215,12 @@ class ElementListView(BaseGenericListView):
     model = Element
 
 
-class ElementCreateView(generic.CreateView):
+class ElementCreateView(BaseGenericCreateView):
     model = Element
     fields = '__all__'
 
 
-class ElementDetailView(generic.DetailView):
+class ElementDetailView(BaseGenericDetailView):
     model = Element
 
 
@@ -242,7 +228,7 @@ class ElementUpdateView(generic.UpdateView):
     model = Element
 
 
-class ElementDeleteView(generic.DeleteView):
+class ElementDeleteView(BaseGenericDeleteView):
     model = Element
 
 ############################
@@ -253,12 +239,12 @@ class ElementCharFieldValueListView(BaseGenericListView):
     model = ElementCharFieldValue
 
 
-class ElementCharFieldValueCreateView(generic.CreateView):
+class ElementCharFieldValueCreateView(BaseGenericCreateView):
     model = ElementCharFieldValue
     fields = '__all__'
 
 
-class ElementCharFieldValueDetailView(generic.DetailView):
+class ElementCharFieldValueDetailView(BaseGenericDetailView):
     model = ElementCharFieldValue
 
 
@@ -266,6 +252,78 @@ class ElementCharFieldValueUpdateView(generic.UpdateView):
     model = ElementCharFieldValue
 
 
-class ElementCharFieldValueDeleteView(generic.DeleteView):
+class ElementCharFieldValueDeleteView(BaseGenericDeleteView):
     model = ElementCharFieldValue
 
+
+############################
+# Element Text Field Value #
+############################
+
+class ElementTextFieldValueListView(BaseGenericListView):
+    model = ElementTextFieldValue
+
+
+class ElementTextFieldValueCreateView(BaseGenericCreateView):
+    model = ElementTextFieldValue
+    fields = '__all__'
+
+
+class ElementTextFieldValueDetailView(BaseGenericDetailView):
+    model = ElementTextFieldValue
+
+
+class ElementTextFieldValueUpdateView(generic.UpdateView):
+    model = ElementTextFieldValue
+
+
+class ElementTextFieldValueDeleteView(BaseGenericDeleteView):
+    model = ElementTextFieldValue
+
+############################
+# Element Date Field Value #
+############################
+
+class ElementDateFieldValueListView(BaseGenericListView):
+    model = ElementDateFieldValue
+
+
+class ElementDateFieldValueCreateView(BaseGenericCreateView):
+    model = ElementDateFieldValue
+    fields = '__all__'
+
+
+class ElementDateFieldValueDetailView(BaseGenericDetailView):
+    model = ElementDateFieldValue
+
+
+class ElementDateFieldValueUpdateView(generic.UpdateView):
+    model = ElementDateFieldValue
+
+
+class ElementDateFieldValueDeleteView(BaseGenericDeleteView):
+    model = ElementDateFieldValue
+
+############################
+# Element Url Field Value #
+############################
+
+class ElementUrlFieldValueListView(BaseGenericListView):
+    model = ElementUrlFieldValue
+
+
+class ElementUrlFieldValueCreateView(BaseGenericCreateView):
+    model = ElementUrlFieldValue
+    fields = '__all__'
+
+
+class ElementUrlFieldValueDetailView(BaseGenericDetailView):
+    model = ElementUrlFieldValue
+
+
+class ElementUrlFieldValueUpdateView(generic.UpdateView):
+    model = ElementUrlFieldValue
+
+
+class ElementUrlFieldValueDeleteView(BaseGenericDeleteView):
+    model = ElementUrlFieldValue

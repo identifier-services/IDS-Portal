@@ -177,4 +177,91 @@ urlpatterns = [
     url(r'^element-char-field-value/(?P<pk>\d+)/delete/$', 
         views.ElementCharFieldValueDeleteView.as_view(), 
         name='element_char_field_value_delete'),
+
+    ############################
+    # element text field value #
+    ############################
+
+    # list
+    url(r'^element-text-field-values/$', 
+        views.ElementTextFieldValueListView.as_view(), 
+        name='element_text_field_value_list'),
+    
+    # create
+    url(r'^element-text-field-value/create/$', 
+        views.ElementTextFieldValueCreateView.as_view(), 
+        name='element_text_field_value_create'),
+    
+    # detail
+    url(r'^element-text-field-value/(?P<pk>\d+)$', 
+        views.ElementTextFieldValueDetailView.as_view(), 
+        name='element_text_field_value_detail'),
+    
+    # update
+    url(r'^element-text-field-value/(?P<pk>\d+)/update/$', 
+        views.ElementTextFieldValueUpdateView.as_view(), 
+        name='element_text_field_value_update'),
+    
+    # delete
+    url(r'^element-text-field-value/(?P<pk>\d+)/delete/$', 
+        views.ElementTextFieldValueDeleteView.as_view(), 
+        name='element_text_field_value_delete'),
+
+    ############################
+    # element date field value #
+    ############################
+
+    # list
+    url(r'^element-date-field-values/$', 
+        views.ElementDateFieldValueListView.as_view(), 
+        name='element_date_field_value_list'),
+    
+    # create
+    url(r'^element-date-field-value/create/$', 
+        views.ElementDateFieldValueCreateView.as_view(), 
+        name='element_date_field_value_create'),
+    
+    # detail
+    url(r'^element-date-field-value/(?P<pk>\d+)$', 
+        views.ElementDateFieldValueDetailView.as_view(), 
+        name='element_date_field_value_detail'),
+    
+    # update
+    url(r'^element-date-field-value/(?P<pk>\d+)/update/$', 
+        views.ElementDateFieldValueUpdateView.as_view(), 
+        name='element_date_field_value_update'),
+    
+    # delete
+    url(r'^element-date-field-value/(?P<pk>\d+)/delete/$', 
+        views.ElementDateFieldValueDeleteView.as_view(), 
+        name='element_date_field_value_delete'),
+
+    ############################
+    # element url field value #
+    ############################
+
+    # list
+    url(r'^element-url-field-values/$', 
+        views.ElementUrlFieldValueListView.as_view(), 
+        name='element_url_field_value_list'),
+    
+    # create
+    url(r'^element-url-field-value/create/$', 
+        views.ElementUrlFieldValueCreateView.as_view(), 
+        name='element_url_field_value_create'),
+    
+    # detail
+    url(r'^element-url-field-value/(?P<pk>\d+)$', 
+        views.ElementUrlFieldValueDetailView.as_view(), 
+        name='element_url_field_value_detail'),
+    
+    # update
+    url(r'^element-url-field-value/(?P<pk>\d+)/update/$', 
+        views.ElementUrlFieldValueUpdateView.as_view(), 
+        name='element_url_field_value_update'),
+    
+    # delete
+    url(r'^element-url-field-value/(?P<pk>\d+)/delete/$', 
+        views.ElementUrlFieldValueDeleteView.as_view(), 
+        name='element_url_field_value_delete'),
 ]
