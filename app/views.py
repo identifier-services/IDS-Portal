@@ -60,7 +60,7 @@ class BaseGenericCreateView(generic.CreateView):
             if parent_types:
                 try:
                     # just grab the first parent until we fix this
-                    parent_type = next(iter(parent_type))
+                    parent_type = next(iter(parent_types))
                     field_name = parent_type['field_name']
                     parent_class = parent_type['class']
 
