@@ -36,7 +36,7 @@
                             <p>There are no {{ child_rel.type_name }}s for this {{ type_name }}.</p>
                         {% endif %}
                         <p>
-                            <a href="{{ child_rel.create_url }}?parent={{ object.id }}">
+                            <a href="{{ child_rel.create_url }}?parent={{ type_name}}:{{ object.id }}">
                                 Add {{ child_rel.type_name }}
                             </a>
                         </p>

@@ -28,10 +28,18 @@ class Base(object):
 
         verbose_name = self._meta.verbose_name
         help_text = 'Enter a name for this %s.' % verbose_name
-        self._meta.get_field('name').help_text = help_text
+        try:
+            self._meta.get_field('name').help_text = help_text
+        except Exception as e:
+            # logger.debug(e)
+            print e
 
         help_text = 'Enter a description for this %s.' % verbose_name
-        self._meta.get_field('description').help_text = help_text
+        try:
+            self._meta.get_field('description').help_text = help_text
+        except Exception as e:
+            # logger.debug(e)
+            print e
 
     @classmethod
     def get_parent_types(self):
@@ -66,7 +74,6 @@ class Base(object):
         many_to_ones = filter(lambda x: type(x) == models.ManyToOneRel, fields)
         child_relations = []
         for many_to_one in many_to_ones:        
-            # rm = getattr(self,'%s_set' % many_to_one.name)
             rm = getattr(self, many_to_one.get_accessor_name())
 
             child_relations.append({

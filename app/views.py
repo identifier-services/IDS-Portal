@@ -35,7 +35,9 @@ class BaseGenericDetailView(generic.DetailView):
         context = super(BaseGenericDetailView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
         context['page_name'] = '%s Detail' % verbose_name.title() 
-        context['type_name'] = verbose_name
+        # TODO: do this better (no replace)
+        context['type_name'] = verbose_name.replace(' ', '_')
+
         return context
 
 
@@ -51,23 +53,28 @@ class BaseGenericCreateView(generic.CreateView):
         return context
 
     def get_initial(self):
-        parent_id = self.request.GET.get('parent')
+        parent_qs = self.request.GET.get('parent')
         initial = {}
 
-        if parent_id:
+        if parent_qs:
             parent_types = self.model.get_parent_types()
 
             #TODO: multiple parents
 
             if parent_types:
                 try:
-                    # just grab the first parent until we fix this
-                    parent_type = next(iter(parent_types))
-                    field_name = parent_type['field_name']
-                    parent_class = parent_type['class']
+                    parts = iter(parent_qs.split(':'))
+                    parent_name = next(parts)
+                    parent_id = next(parts) 
+                    parent_class = None
+
+                    for parent_type in parent_types:
+                        if parent_type['field_name'] == parent_name:
+                            parent_class = parent_type['class']
+                            break
 
                     initial = {
-                        field_name: parent_class.objects.get(pk=parent_id)
+                        parent_name: parent_class.objects.get(pk=parent_id)
                     }
                 except Exception as e:
                     # logger.debug(e)
