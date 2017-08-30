@@ -184,10 +184,13 @@ class ElementFieldDescriptor(Base, models.Model):
         (INT, 'integer'),
         (FLOAT, 'real number'),
         (DATE, 'date'),
+        (URL, 'url'),
         (REL, 'relation'),
     )
 
-    value_type = models.CharField(max_length=3,
+    value_type_abbr = models.CharField(
+        "value type",
+        max_length=3,
         choices=VALUE_TYPE_CHOICES,
         default=CHAR,
     )
@@ -264,7 +267,7 @@ class ElementCharFieldValue(AbstractElementFieldValue):
         return str(self.value)
 
     class Meta:
-        verbose_name = 'short text'
+        verbose_name = 'short text value'
 
 
 class ElementTextFieldValue(AbstractElementFieldValue):
@@ -273,7 +276,7 @@ class ElementTextFieldValue(AbstractElementFieldValue):
     value = models.TextField(blank=True, null=True)
 
     class Meta:
-        verbose_name = 'long text'
+        verbose_name = 'long text value'
 
 
 class ElementIntFieldValue(AbstractElementFieldValue):
@@ -282,7 +285,7 @@ class ElementIntFieldValue(AbstractElementFieldValue):
     value = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        verbose_name = 'integer'
+        verbose_name = 'integer value'
 
 
 class ElementFloatFieldValue(AbstractElementFieldValue):
@@ -291,7 +294,7 @@ class ElementFloatFieldValue(AbstractElementFieldValue):
     value = models.FloatField(blank=True, null=True)
 
     class Meta:
-        verbose_name = 'float'
+        verbose_name = 'float value'
 
 
 class ElementDateFieldValue(AbstractElementFieldValue):
@@ -300,7 +303,7 @@ class ElementDateFieldValue(AbstractElementFieldValue):
     value = models.DateField(auto_now=False, auto_now_add=False, blank=True, null=True)
 
     class Meta:
-        verbose_name = 'date'
+        verbose_name = 'date value'
 
 
 class ElementUrlFieldValue(AbstractElementFieldValue):
@@ -309,7 +312,7 @@ class ElementUrlFieldValue(AbstractElementFieldValue):
     value = models.URLField(max_length=500, blank=True, null=True)
 
     class Meta:
-        verbose_name = 'url'
+        verbose_name = 'url value'
 
 
 # class ElementRelFieldValue(AbstractElementFieldValue):

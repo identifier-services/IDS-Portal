@@ -10,7 +10,7 @@
             {% for parent_rel in object.get_parent_relations %}
                 <li><b>{{ parent_rel.verbose_name|title }}:</b> 
                     <a href="{{ parent_rel.object.get_absolute_url }}">
-                        {{ parent_rel.object.name }}
+                        {{ parent_rel.object }}
                     </a>
                 </li>
             {% endfor %}

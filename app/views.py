@@ -36,7 +36,6 @@ class BaseGenericDetailView(generic.DetailView):
         verbose_name = self.model._meta.verbose_name
         context['verbose_name'] = verbose_name.title() 
         context['type_name'] = verbose_name.replace(' ', '_')
-
         return context
 
 
@@ -57,24 +56,19 @@ class BaseGenericCreateView(generic.CreateView):
 
         if parent_qs:
             parent_types = self.model.get_parent_types()
+            if not parent_types:
+                return None
 
-            #TODO: multiple parents
-
-            if parent_types:
+            for parent in parent_qs.split(','):
                 try:
-                    parts = iter(parent_qs.split(':'))
-                    parent_name = next(parts)
-                    parent_id = next(parts) 
-                    parent_class = None
+                    parent_name, parent_id = parent.split(':')
+                    parent_class = filter(
+                        lambda x,y=parent_name: x['field_name'] == parent_name,
+                        parent_types).pop().get('class')
 
-                    for parent_type in parent_types:
-                        if parent_type['field_name'] == parent_name:
-                            parent_class = parent_type['class']
-                            break
-
-                    initial = {
+                    initial.update({
                         parent_name: parent_class.objects.get(pk=parent_id)
-                    }
+                    })
                 except Exception as e:
                     # logger.debug(e)
                     print e
@@ -182,6 +176,7 @@ class ElementTypeListView(BaseGenericListView):
 class ElementTypeCreateView(BaseGenericCreateView):
     model = ElementType
 
+
 class ElementTypeDetailView(BaseGenericDetailView):
     model = ElementType
 
@@ -212,7 +207,8 @@ class ElementFieldDescriptorDetailView(generic.DetailView):
     template_name = 'app/field_descriptor_detail.html'
 
     def get_context_data(self, **kwargs):
-        context = super(ElementFieldDescriptorDetailView, self).get_context_data(**kwargs)
+        context = super(ElementFieldDescriptorDetailView, self)\
+            .get_context_data(**kwargs)
         descriptor = context['object']
 
         try:
@@ -256,20 +252,44 @@ class ElementDetailView(generic.DetailView):
         context['type_name'] = verbose_name.replace(' ', '_')
 
         context_object = context['object']
-        descriptors = context_object.element_type.elementfielddescriptor_set.all()
+        descriptors = \
+            context_object.element_type.elementfielddescriptor_set.all()
 
         values = []
         for descriptor in descriptors:
-            value_type = descriptor.value_type
-            type_name = descriptor._meta.verbose_name.replace(' ', '_')
+            # get descriptor attributes
+            label = descriptor.label
+            help_text = descriptor.help_text
+            
+            # get the values
+            value_type_abbr = descriptor.value_type_abbr
+            value_type = descriptor.value_type_map[value_type_abbr]
+            # TODO: what if more than one field value? how to prevent?
+            field_value = value_type.objects.select_related()\
+                .filter(element_field_descriptor=descriptor).first()
+
+            if field_value:
+                action_url = '%s/update' % field_value.get_absolute_url()
+                action = 'Edit'
+            else:
+                descriptor_field_name = \
+                    descriptor._meta.verbose_name.replace(' ', '_')
+
+                parents_qs = '?parent=%s:%s,%s:%s' % (
+                    descriptor_field_name, descriptor.id,
+                    context['type_name'], context_object.id
+                )
+                action_url = '%s%s' % (value_type.get_create_url(), parents_qs)
+                action = 'Set'
+
             type_id = descriptor.id
-            field_class = descriptor.value_type_map[value_type]
+
             values.append({
-                'label': descriptor.label,
-                'help_text': descriptor.help_text,
-                'type_name': type_name,
-                'type_id': type_id,
-                'create_url': field_class.get_create_url()
+                'label': label,
+                'help_text': help_text,
+                'field_value': field_value,
+                'action_url': action_url,
+                'action': action,
             })
         context['values'] = values
 

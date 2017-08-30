@@ -25,41 +25,21 @@
         {% endfor %}
     </ul>
 
-
     <hr/>
     <h3>Values:</h3>
     <ul>
-        {% for field in object.get_fields %}
-            <li><b>{{ field.label }}:</b> {{ field.value }}</li>
+        {% for value in values %}
+            <li><b>{{ value.label }}:</b> 
+                {% if value.field_value %}
+                    {{ value.field_value }}
+                {% endif %}
+        
+                <a href={{ value.action_url }}> {{ value.action }}</a> 
+                ({{ value.help_text }})
+            </li>
         {% endfor %}
     </ul>
-<!--
-    {% if object.get_child_relations %}
-        <hr/>
-        <h3>Related:</h3>
-        <ul>
-            {% for child_rel in object.get_child_relations %}
-                <li><b>{{ child_rel.type_name|title }}s:</b>
-                    <ul>
-                        {% if child_rel.objects %}
-                            {% for child in child_rel.objects %}
-                                <li><a href="{{ child.get_absolute_url }}">{{ child }}</a></li>
-                            {% endfor %}
-                        {% else %}
-                            <p>There are no {{ child_rel.type_name }}s for this {{ type_name }}.</p>
-                        {% endif %}
-                    </ul>
-                    <p>
-                        <a href="{{ child_rel.create_url }}?parent={{ type_name}}:{{ object.id }}">
-                            Add {{ child_rel.type_name|title }}
-                        </a>
-                    </p>
-                </li>
-            {% endfor %}
-        </ul>
-        <hr/>
-    {% endif %}
--->
+
     <a href="{{ object.get_absolute_url }}/update">Edit {{ verbose_name }}</a>
     <a href="{{ object.get_absolute_url }}/delete">Delete {{ verbose_name }}</a>
 {% endblock %}

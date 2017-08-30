@@ -8,6 +8,14 @@
             {% for object in object_list %}
                 <li>
                     <a href="{{ object.get_absolute_url }}">{{ object }}</a>
+                    {% if object.get_parent_relations %}
+                        {% for parent_rel in object.get_parent_relations %}
+                            {{ parent_rel.verbose_name|title }}: 
+                            <a href="{{ parent_rel.object.get_absolute_url }}">
+                                {{ parent_rel.object }}
+                            </a>
+                        {% endfor %}
+                    {% endif %}
                 </li>
             {% endfor %}
         {% else %}
@@ -17,3 +25,17 @@
     </ul>
 
 {% endblock %}
+
+{% if object.get_parent_relations %}
+        <hr/>
+        <h3>From:</h3>
+        <ul>
+            {% for parent_rel in object.get_parent_relations %}
+                <li><b>{{ parent_rel.verbose_name|title }}:</b> 
+                    <a href="{{ parent_rel.object.get_absolute_url }}">
+                        {{ parent_rel.object }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
