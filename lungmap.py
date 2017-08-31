@@ -87,6 +87,12 @@ def split_and_link(path):
         for k in unique_row_sets.keys():
             unique_row_sets[k] = []
 
+        for row in reader:
+            for element in elements:
+                print element['name'], ':', [{x[0]:x[1]} for x in row.items() if x[0] in element['fields']]
+                print element['name'], ':', filter(lambda x, y=element['fields']: x[0] in y, row.items())
+
+
 if __name__ == '__main__':
     args = sys.argv
     if len(args) < 2:
