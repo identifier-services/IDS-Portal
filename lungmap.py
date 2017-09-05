@@ -9,88 +9,110 @@ def split_and_link(path):
 
         elements = []
 
-        specimen_fields = [
-            'EmbeddingSource',
-            'Genotype',
-            'PreparationMethod',
-            'Species',
-            'Strain',
-            'TotalSets',
-            'Sex',
-            'TissueType',
-            'Age',
-            'DissectionTime',
-            'SpecimenID'
-        ]
+        ############
+        # specimen #
+        ############
 
         elements.append({
             'name': 'specimen',
-            'fields': specimen_fields,
-            'parents': []
+            'fields': [
+                'EmbeddingSource',
+                'Genotype',
+                'PreparationMethod',
+                'Species',
+                'Strain',
+                'TotalSets',
+                'Sex',
+                'TissueType',
+                'Age',
+                'DissectionTime',
+                'SpecimenID'
+            ],
+            'parents': [],
+            'values': [],
         })
 
-        chunk_fields = [
-            'DirectionSection',
-            'SectionThickness',
-            'TotalSets',
-            'Highlight',
-            'Rotate',
-            'Section',
-            'Slide',
-            'Set',
-        ]
+        #########
+        # chunk #
+        #########
 
         elements.append({
             'name': 'chunk',
-            'fields': chunk_fields,
-            'parents': ['specimen']
+            'fields': [
+                'DirectionSection',
+                'SectionThickness',
+                'TotalSets',
+                'Highlight',
+                'Rotate',
+                'Section',
+                'Slide',
+                'Set',
+            ],
+            'parents': ['specimen'],
+            'values': [],
         })
 
-        probe_fields = [
-            'AccessionNumber',
-            'GeneSymbol',
-            'PrimerForward',
-            'PrimerReverse',
-            'TemplateSequence',
-            'ProbeID',
-        ]
+        #########
+        # probe #
+        #########
 
         elements.append({
             'name': 'probe',
-            'fields': probe_fields,
-            'parents': []
+            'fields': [
+                'AccessionNumber',
+                'GeneSymbol',
+                'PrimerForward',
+                'PrimerReverse',
+                'TemplateSequence',
+                'ProbeID',
+            ],
+            'parents': [],
+            'values': [],
         })
 
-        process_fields = [
-            'Protocol',
-        ]
+        ###########
+        # process #
+        ###########
 
         elements.append({
             'name': 'process',
-            'fields': process_fields,
-            'parents': ['probe','chunk']
+            'fields': [
+                'Protocol',
+            ],
+            'parents': ['probe','chunk'],
+            'values': [],
         })
 
-        image_fields = [
-            'URL',
-            'FileName',
-            'FilePath',
-        ]
+        #########
+        # image #
+        #########
 
         elements.append({
             'name': 'image',
-            'fields': image_fields,
-            'parents': ['chunk', 'image']
+            'fields': [
+                'URL',
+                'FileName',
+                'FilePath',
+            ],
+            'parents': ['chunk', 'image'],
+            'values': [],
         })
 
+        # create and niitialize dict of lists
         unique_row_sets = dict.fromkeys(fieldnames)
         for k in unique_row_sets.keys():
             unique_row_sets[k] = []
 
+        # iterate through each row in csv
         for row in reader:
+            print "----- row ------"
+            # for each row, iterate through element defs    
             for element in elements:
+                # print element name and element values (in dict key value pairs)
                 print element['name'], ':', [{x[0]:x[1]} for x in row.items() if x[0] in element['fields']]
-                print element['name'], ':', filter(lambda x, y=element['fields']: x[0] in y, row.items())
+                print
+                # # same, but with sets or tuples maybe, instead of dictionary k,v pairs
+                # print element['name'], ':', filter(lambda x, y=element['fields']: x[0] in y, row.items())
 
 
 if __name__ == '__main__':
