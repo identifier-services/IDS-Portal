@@ -1,6 +1,8 @@
 import csv
 import sys
 import os
+import uuid
+import pprint
 
 def split_and_link(path):
     with open(path, 'r') as flat_file:
@@ -94,26 +96,65 @@ def split_and_link(path):
                 'FileName',
                 'FilePath',
             ],
-            'parents': ['chunk', 'image'],
+            'parents': ['process'],
             'values': [],
         })
 
-        # create and niitialize dict of lists
-        unique_row_sets = dict.fromkeys(fieldnames)
-        for k in unique_row_sets.keys():
-            unique_row_sets[k] = []
+        # i'm sure what follows could be done more efficiently
+        # maybe i should import sqlite and build/query db
 
-        # iterate through each row in csv
+        rows = []
         for row in reader:
-            print "----- row ------"
-            # for each row, iterate through element defs    
-            for element in elements:
-                # print element name and element values (in dict key value pairs)
-                print element['name'], ':', [{x[0]:x[1]} for x in row.items() if x[0] in element['fields']]
-                print
-                # # same, but with sets or tuples maybe, instead of dictionary k,v pairs
-                # print element['name'], ':', filter(lambda x, y=element['fields']: x[0] in y, row.items())
+            rows.append(row)
 
+        unique_element_strings = []
+
+        for element in elements:
+            field_names = element['fields']
+            element_type = element['name']
+            pk_name = '__%sID' % (element_type.title())
+            pk_id = None
+            element_values = {}
+            for row in rows:
+                for field_name in field_names:
+                    element_values.update({field_name: row[field_name]})
+                if not str(element_values) in unique_element_strings:
+                    unique_element_strings.append(str(element_values))
+                    pk_id = str(uuid.uuid4())
+                    element_values.update({pk_name: pk_id})
+                    element['values'].append(element_values)
+                row.update({pk_name: pk_id})
+
+        # for element in elements:
+        #     print
+        #     print '---', element['name'], '---', element['values']
+        #     print
+
+        for element in elements:
+            element_type = element['name']
+            primary_key = '__%sID' % (element_type.title())
+            parents = []
+            for parent in element['parents']:
+                parents.append({'name': parent, 'key': '__%sID' % parent.title()})
+            for value in element['values']:
+                pk_id = value.get(primary_key)
+                for row in rows:
+                    row_pk = row.get(primary_key)
+                    if row_pk == pk_id:
+                        for parent in parents:
+                            name = parent['name']
+                            key = parent['key']
+                            fk = row.get(key)
+                            if fk:
+                                value.update({'%s%s' % (name, key): fk})
+                        break
+
+
+        for element in elements:
+            print
+            print '---', element['name'], '---'
+            pprint.pprint(element['values'])
+            print
 
 if __name__ == '__main__':
     args = sys.argv
