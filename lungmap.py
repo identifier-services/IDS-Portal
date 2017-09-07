@@ -114,8 +114,8 @@ def split_and_link(path):
             element_type = element['name']
             pk_name = '__%sID' % (element_type.title())
             pk_id = None
-            element_values = {}
             for row in rows:
+                element_values = {}
                 for field_name in field_names:
                     element_values.update({field_name: row[field_name]})
                 if not str(element_values) in unique_element_strings:
@@ -124,11 +124,6 @@ def split_and_link(path):
                     element_values.update({pk_name: pk_id})
                     element['values'].append(element_values)
                 row.update({pk_name: pk_id})
-
-        # for element in elements:
-        #     print
-        #     print '---', element['name'], '---', element['values']
-        #     print
 
         for element in elements:
             element_type = element['name']
@@ -149,12 +144,14 @@ def split_and_link(path):
                                 value.update({'%s%s' % (name, key): fk})
                         break
 
-
         for element in elements:
-            print
-            print '---', element['name'], '---'
-            pprint.pprint(element['values'])
-            print
+            with open('%s.csv' % element['name'], 'w') as f:
+                values = element['values']
+                fieldnames = values[0].keys()
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                headers = dict((n,n) for n in fieldnames)
+                writer.writerow(headers)
+                writer.writerows(values)
 
 if __name__ == '__main__':
     args = sys.argv
