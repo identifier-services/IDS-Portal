@@ -139,6 +139,13 @@ class Project(AbstractModel):
 
     investigation_type = models.ForeignKey(InvestigationType, on_delete=models.CASCADE) 
 
+    archive = models.FileField('bulk upload', upload_to='documents/%Y/%m/%d/', 
+        blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        import pdb; pdb.set_trace()
+        super(Project, self).save(*args, **kwargs)
+
 
 class ElementType(AbstractModel):
     """Model describing the types of entities that may be instantiated 

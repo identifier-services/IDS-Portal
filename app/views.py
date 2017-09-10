@@ -5,10 +5,15 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import generic
 
+from zipfile import ZipFile
+import csv
+
 from .models import (InvestigationType, Project, ElementType, 
     ElementFieldDescriptor, Element, ElementCharFieldValue,
     ElementTextFieldValue, ElementIntFieldValue, ElementFloatFieldValue, 
     ElementDateFieldValue, ElementUrlFieldValue)
+
+from .forms import ProjectForm
 
 ##############
 # Base Views #
@@ -152,7 +157,31 @@ class ProjectListView(BaseGenericListView):
 
 class ProjectCreateView(BaseGenericCreateView):
     model = Project
+    # template_name = 'app/project_form.html'
 
+    # def post(self, request, *args, **kwargs):
+    #     if request.FILES['bulk_upload']:
+    #         bulk_upload = request.FILES['bulk_upload']
+    #         zf = ZipFile(bulk_upload)
+    #         for filename in zf.namelist():
+    #             data = zf.read(filename).split('\n')
+
+    #            reader = csv.DictReader(data, delimiter=str('\t'))
+
+    #             name = '_'.join(filename.split('.')[:-1])
+    #             fields = reader.fieldnames
+
+    #             elements = []
+
+    #             for row in reader:
+    #                 elements.append(row)
+
+    #             element_types.append({
+    #                 'name': name,
+    #                 'fields': fields,
+    #                 'elements': elements
+    #             })
+    #     return super(ProjectCreateView, self).post(request, *args, **kwargs)
 
 class ProjectDetailView(BaseGenericDetailView):
     model = Project
