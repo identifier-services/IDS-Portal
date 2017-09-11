@@ -17,10 +17,16 @@ from django.conf import settings
 from django.conf.urls import url, include
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth.views import logout
 from django.views.generic import RedirectView
+
+from ids_auth import views as auth_views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^auth/', include('ids_auth.urls', namespace='ids_auth')),
+    url(r'^login/$', auth_views.agave_oauth, name='login'),
+    url(r'^logout/$', logout, {'next_page': '/'}, name='logout'),
     url(r'^bulk/', include('bulk.urls', namespace='bulk')),
     url(r'', include('app.urls', namespace='app')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
