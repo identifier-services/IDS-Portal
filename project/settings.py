@@ -15,6 +15,7 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+print BASE_DIR
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -38,18 +39,40 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'ids_auth.apps.IdsAuthConfig',
     'app.apps.AppConfig',
     'bulk.apps.BulkConfig',
 ]
 
-MIDDLEWARE = [
+AUTHENTICATION_BACKENDS = (
+    'ids_auth.backends.AgaveOAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+#MIDDLEWARE = [
+#    'django.middleware.security.SecurityMiddleware',
+#    'django.contrib.sessions.middleware.SessionMiddleware',
+#    'django.middleware.common.CommonMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
+#    'django.contrib.auth.middleware.AuthenticationMiddleware',
+#    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+#    'django.contrib.messages.middleware.MessageMiddleware',
+#    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#    
+#    'ids_auth.middleware.AgaveTokenRefreshMiddleware',
+#]
+
+MIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'ids_auth.middleware.AgaveTokenRefreshMiddleware',
 ]
 
 ROOT_URLCONF = 'project.urls'
@@ -124,8 +147,28 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
+##
+# Agave
+#
+# Tenant Configuration
+AGAVE_TENANT_ID = os.environ.get('AGAVE_TENANT_ID', 'iplantc.org')
+AGAVE_TENANT_BASEURL = os.environ.get('AGAVE_TENANT_BASEURL', 'https://agave.iplantc.org/')
+#
+# Client Configuration
+AGAVE_CLIENT_KEY = os.environ.get('AGAVE_CLIENT_KEY')
+AGAVE_CLIENT_SECRET = os.environ.get('AGAVE_CLIENT_SECRET')
+AGAVE_SUPER_TOKEN = os.environ.get('AGAVE_SUPER_TOKEN')
+#
+# Other agave stuff
+AGAVE_TOKEN_SESSION_ID = 'agave_token'
