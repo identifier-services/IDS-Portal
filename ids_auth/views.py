@@ -52,6 +52,8 @@ def agave_oauth_callback(request):
         logger.error(msg)
         return HttpResponseBadRequest('Authorization State Failed')
 
+    logger.debug('callback, request.GET: %s' % request.GET)
+
     if 'code' in request.GET:
         # obtain a token for the user
         code = request.GET['code']
@@ -72,8 +74,13 @@ def agave_oauth_callback(request):
         token_data = response.json()
         token_data['created'] = int(time.time())
 
+
+	logger.debug('token_data: %s' % token_data)
+
         # log user in
         user = authenticate(backend='agave', token=token_data['access_token'])
+
+	logger.debug('user: %s' % user)
 
         if user:
 
