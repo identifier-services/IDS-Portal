@@ -1,33 +1,43 @@
-from django.conf import settings
 from django.contrib.auth import logout
 from django.core.exceptions import ObjectDoesNotExist
 from requests.exceptions import RequestException, HTTPError
+from django.contrib import auth
 import logging
 
+#pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
+#pylint: enable=invalid-name
+
+def get_user(request):
+    if not hasattr(request, '_cached_user'):
+        request._cached_user = auth.get_user(request)
+    return request._cached_user
 
 
 class AgaveTokenRefreshMiddleware(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
 
-    def process_request(self, request):
-        if request.path != '/logout/' and request.user.is_authenticated():
-            session_key = getattr(settings, 'AGAVE_TOKEN_SESSION_ID')
+    def __call__(self, request):
+        user = get_user(request)
+        if request.path != '/logout/' and user.is_authenticated():
             try:
-                token = request.user.agave_oauth
-                if token and token.expired:
+                agave_oauth = user.agave_oauth
+                if agave_oauth.expired:
                     try:
-                        token.refresh()
-                        request.session[session_key] = token.token
+                        agave_oauth.client.token.refresh()
                     except HTTPError:
-                        logger.exception('Agave Token refresh failed. Forcing logout',
-                                         extra={'user': request.user.username})
+                        logger.exception('Agave Token refresh failed; Forcing logout',
+                                         extra={'user': user.username})
                         logout(request)
             except ObjectDoesNotExist:
-                logger.warn('Agave Token missing. Forcing logout.',
-                            extra={'user': request.user.username})
+                logger.warn('Authenticated user missing Agave API Token',
+                            extra={'user': user.username})
                 logout(request)
             except RequestException:
                 logger.exception('Agave Token refresh failed. Forcing logout',
-                                 extra={'user': request.user.username})
+                                 extra={'user': user.username})
                 logout(request)
+        response = self.get_response(request)
+        return response
 

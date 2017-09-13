@@ -52,7 +52,7 @@ def agave_oauth_callback(request):
         logger.error(msg)
         return HttpResponseBadRequest('Authorization State Failed')
 
-    logger.debug('callback, request.GET: %s' % request.GET)
+    # logger.debug('callback, request.GET: %s' % request.GET)
 
     if 'code' in request.GET:
         # obtain a token for the user
@@ -63,11 +63,17 @@ def agave_oauth_callback(request):
         redirect_uri = request.build_absolute_uri(
             reverse('ids_auth:agave_oauth_callback'))
 
+
+	logger.debug('callback, redirect uri: %s' % redirect_uri)
+
         body = {
             'grant_type': 'authorization_code',
             'code': code,
             'redirect_uri': redirect_uri,
         }
+
+	logger.debug('post request body: %s' % body)
+
         response = requests.post('%s/token' % tenant_base_url,
                                  data=body,
                                  auth=(client_key, client_sec))
