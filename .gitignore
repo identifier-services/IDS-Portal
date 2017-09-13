@@ -2,3 +2,6 @@
 db.sqlite3
 migrations/
 *.swp
+*.env
+*.secret
+*.bak
