@@ -26,7 +26,8 @@ SECRET_KEY = 'g*y4d51va%ml2x_u1#(a73ptdrkbz*6$h%--&ju=*6j&=_smzx'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['idsvc.org', 'www.idsvc.org', 'lite.idsvc.org']
 
 
 # Application definition
@@ -157,17 +158,75 @@ MEDIA_URL = '/media/'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 
+# logging
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters' : {
+        'default': {
+            'format': '[DJANGO] %(levelname)s %(asctime)s %(module)s %(name)s.%(funcName)s: %(message)s'
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+        },
+        'logfile': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR + "/logfile",
+            'maxBytes': 50000,
+            'backupCount': 2,
+            'formatter': 'default',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'project': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'app': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'ids_auth': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+    }
+} # TODO: should log through uwsgi
+
+## ids.env
+# export AGAVE_CLIENT_KEY=DRL79L1DzP9vfzPdO5m31fKrkHka
+# export AGAVE_CLIENT_SECRET=84SW_ftBwrYTbADgpU9bgRabrcAa
+# export AGAVE_SUPER_TOKEN=dcdebec459a328f9d4834997f7f16d8
+# export AGAVE_TENANT_BASEURL=https://agave.iplantc.org/
+# export DJANGO_DEBUG=False
+
+# TODO: fix uwsgi conf reading thing
+
 ##
 # Agave
 #
 # Tenant Configuration
-AGAVE_TENANT_ID = os.environ.get('AGAVE_TENANT_ID', 'iplantc.org')
-AGAVE_TENANT_BASEURL = os.environ.get('AGAVE_TENANT_BASEURL', 'https://agave.iplantc.org/')
+AGAVE_TENANT_ID = 'iplantc.org' # os.environ.get('AGAVE_TENANT_ID', 'iplantc.org')
+AGAVE_TENANT_BASEURL = 'https://agave.iplantc.org/' # os.environ.get('AGAVE_TENANT_BASEURL', 'https://agave.iplantc.org/')
 #
 # Client Configuration
-AGAVE_CLIENT_KEY = os.environ.get('AGAVE_CLIENT_KEY')
-AGAVE_CLIENT_SECRET = os.environ.get('AGAVE_CLIENT_SECRET')
-AGAVE_SUPER_TOKEN = os.environ.get('AGAVE_SUPER_TOKEN')
+# AGAVE_CLIENT_KEY = 'DRL79L1DzP9vfzPdO5m31fKrkHka' # os.environ.get('AGAVE_CLIENT_KEY')
+# AGAVE_CLIENT_SECRET = '84SW_ftBwrYTbADgpU9bgRabrcAa' # os.environ.get('AGAVE_CLIENT_SECRET')
+# AGAVE_SUPER_TOKEN = 'dcdebec459a328f9d4834997f7f16d8' # os.environ.get('AGAVE_SUPER_TOKEN')
+AGAVE_CLIENT_KEY = 'dY72GkoQrGXKoJWEmTVYb6HE0ZYa'
+AGAVE_CLIENT_SECRET = '7vpFUOvGsUBnwodf5koZUZhXYTsa'
+AGAVE_SUPER_TOKEN = '79b3aaf72cb278d908b8256ea36ef90'
 #
 # Other agave stuff
 AGAVE_TOKEN_SESSION_ID = 'agave_token'
