@@ -11,9 +11,9 @@ from zipfile import ZipFile
 import csv
 
 from .models import (InvestigationType, Project, ElementType, 
-    ElementFieldDescriptor, Element, ElementCharFieldValue,
-    ElementTextFieldValue, ElementIntFieldValue, ElementFloatFieldValue, 
-    ElementDateFieldValue, ElementUrlFieldValue)
+    RelationshipDefinition, ElementFieldDescriptor, Element, 
+    ElementCharFieldValue, ElementTextFieldValue, ElementIntFieldValue, 
+    ElementFloatFieldValue, ElementDateFieldValue, ElementUrlFieldValue)
 
 from .forms import ProjectForm
 
@@ -250,9 +250,7 @@ class ElementFieldDescriptorDetailView(generic.DetailView):
         descriptor = context['object']
 
         try:
-            context['value_type'] = filter(
-                lambda x, y=descriptor.value_type_abbr: x[0]==y, 
-                descriptor.VALUE_TYPE_CHOICES)[0][1]
+            context['value_type'] = descriptor.verbose_value_type
         except Exception as e:
             logger.debug(e)
 
@@ -265,6 +263,48 @@ class ElementFieldDescriptorUpdateView(BaseGenericUpdateView):
 
 class ElementFieldDescriptorDeleteView(BaseGenericDeleteView):
     model = ElementFieldDescriptor
+
+###########################
+# Relationship Definition #
+###########################
+
+class RelationshipDefinitionListView(BaseGenericListView):
+    model = RelationshipDefinition
+
+
+class RelationshipDefinitionCreateView(BaseGenericCreateView):
+    model = RelationshipDefinition
+    fields = '__all__'
+
+
+class RelationshipDefinitionDetailView(generic.DetailView):
+    model = RelationshipDefinition
+    template_name = 'app/field_descriptor_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(RelationshipDefinitionDetailView, self)\
+            .get_context_data(**kwargs)
+        definition = context['object']
+
+        try:
+            context['rel_type'] = definition.verbose_relationship_type
+        except Exception as e:
+            logger.debug(e)
+
+        try:
+            context['rel_type'] = definition.verbose_cardinality
+        except Exception as e:
+            logger.debug(e)
+
+        return context
+
+
+class RelationshipDefinitionUpdateView(BaseGenericUpdateView):
+    model = RelationshipDefinition
+
+
+class RelationshipDefinitionDeleteView(BaseGenericDeleteView):
+    model = RelationshipDefinition
 
 ###########
 # Element #

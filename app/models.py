@@ -89,6 +89,9 @@ class Base(object):
 
     @classmethod
     def get_create_url(cls):
+
+        import pdb; pdb.set_trace()
+
         route = 'app:%s_create' % snake(cls.__name__)
         return reverse(route)
 
@@ -263,6 +266,16 @@ class ElementFieldDescriptor(Base, models.Model):
         } 
         return mapping
 
+    @property
+    def verbose_value_type(self):
+        try:
+            return filter(lambda x, y=self.value_type_abbr: x[0]==y, 
+                self.VAlUE_TYPE_CHOICES)[0][1]
+        except Exception as e:
+            logger.debug(e)
+
+        return self.rel_type_abbr
+
     ##########
     # Methods
     ##########
@@ -327,27 +340,31 @@ class RelationshipDefinition(Base, models.Model):
         default=ONE,
     )
 
-    def __str__(self):
-        rel = self.rel_type_abbr
-
+    @property
+    def verbose_relationship_type(self):
         try:
-            rel = filter(lambda x, y=self.rel_type_abbr: x[0]==y, 
+            return filter(lambda x, y=self.rel_type_abbr: x[0]==y, 
                 self.RELATIONSHIP_TYPES)[0][1]
         except Exception as e:
             logger.debug(e)
 
-        card = self.cardinality_abbr
+        return self.rel_type_abbr
 
+    @property
+    def verbose_cardinality(self):
         try:
-            card = filter(lambda x, y=self.cardinality_abbr: x[0]==y, 
+            return filter(lambda x, y=self.cardinality_abbr: x[0]==y, 
                 self.CARDINALITIES)[0][1]
         except Exception as e:
             logger.debug(e)
 
+        return self.rel_type_abbr
+
+    def __str__(self):
         return '%s has a %s relationship to %s %s' % (
             self.source.name, 
-            rel, 
-            card, 
+            self.verbose_relationship_type, 
+            self.verbose_cardinality,
             self.target.name
         )
 
