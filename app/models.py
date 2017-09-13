@@ -19,6 +19,9 @@ class Base(object):
     Provides methods for various abstract model classes.
     """ # I think it doesn't follow good practice through.
 
+    # TODO: add is_public (queries project)
+    # TODO: add owner (queries project)
+
     @classmethod
     def get_parent_types(self):
         fields = self._meta.get_fields()
@@ -139,11 +142,17 @@ class Project(AbstractModel):
 
     investigation_type = models.ForeignKey(InvestigationType, on_delete=models.CASCADE) 
 
+    # TODO: rename? bulk? sheets?
     archive = models.FileField('bulk upload', upload_to='documents/%Y/%m/%d/', 
         blank=True, null=True)
 
+    # TODO: add fk to owner/creator (auth.user)
+
+    # TODO: add many-to-many to collaborators
+
     def save(self, *args, **kwargs):
-        import pdb; pdb.set_trace()
+        # TODO: what's up with creating projects?
+        # import pdb; pdb.set_trace()
         super(Project, self).save(*args, **kwargs)
 
 
