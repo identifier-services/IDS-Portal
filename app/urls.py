@@ -120,6 +120,34 @@ urlpatterns = [
         views.ElementFieldDescriptorDeleteView.as_view(), 
         name='element_field_descriptor_delete'),
 
+    ###########################
+    # relationship definition #
+    ###########################
+
+    # list
+    url(r'^relationship-definitions/$', 
+        views.RelationshipDefinitionListView.as_view(), 
+        name='relationship_definition_list'),
+
+    # create
+    url(r'^relationship-definition/create/$', 
+        views.RelationshipDefinitionCreateView.as_view(), 
+        name='relationship_definition_create'),
+
+    # detail
+    url(r'^relationship-definition/(?P<pk>\d+)$', 
+        views.RelationshipDefinitionDetailView.as_view(), 
+        name='relationship_definition_detail'),
+
+    # update
+    url(r'^relationship-definition/(?P<pk>\d+)/update/$', 
+        views.RelationshipDefinitionUpdateView.as_view(), 
+        name='relationship_definition_update'),
+    # delete
+    url(r'^relationship-definition/(?P<pk>\d+)/delete/$', 
+        views.RelationshipDefinitionDeleteView.as_view(), 
+        name='relationship_definition_delete'),
+
     ###########
     # element #
     ###########
