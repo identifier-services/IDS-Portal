@@ -133,6 +133,9 @@ class AbstractModel(Base, models.Model):
 class InvestigationType(AbstractModel):
     """Model describing the types of projects that may be instantiated."""
 
+    definition_file = models.FileField('definition file(s)', upload_to='documents/%Y/%m/%d/', 
+        blank=True, null=True)
+
     class Meta:
         verbose_name = "investigation type"
 

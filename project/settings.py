@@ -15,8 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-print BASE_DIR
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
@@ -50,20 +48,19 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-#MIDDLEWARE = [
-#    'django.middleware.security.SecurityMiddleware',
-#    'django.contrib.sessions.middleware.SessionMiddleware',
-#    'django.middleware.common.CommonMiddleware',
-#    'django.middleware.csrf.CsrfViewMiddleware',
-#    'django.contrib.auth.middleware.AuthenticationMiddleware',
-#    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-#    'django.contrib.messages.middleware.MessageMiddleware',
-#    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-#    
-#    'ids_auth.middleware.AgaveTokenRefreshMiddleware',
-#]
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'ids_auth.middleware.AgaveTokenRefreshMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+]
 
-MIDDLEWARE_CLASSES = [
+xMIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -162,71 +159,55 @@ LOGIN_REDIRECT_URL = '/'
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
-    'formatters' : {
-        'default': {
-            'format': '[DJANGO] %(levelname)s %(asctime)s %(module)s %(name)s.%(funcName)s: %(message)s'
-        }
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[#####]  %(levelname)s %(asctime)s %(module)s %(process)d %(thread)d [#####] %(message)s'
+        },
+        'medium': {
+            'format': '[#####] %(levelname)s %(asctime)s %(module)s [#####] %(message)s'
+        },
+        'simple': {
+            'format': '[#####] %(levelname)s [#####] %(message)s'
+        },
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'default',
-        },
-        'logfile': {
-            'level':'DEBUG',
-            'class':'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR + "/logfile",
-            'maxBytes': 50000,
-            'backupCount': 2,
-            'formatter': 'default',
+            'formatter': 'medium',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'INFO',
-            'propogate': True,
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
         'project': {
-            'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
         'app': {
-            'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
         'ids_auth': {
-            'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
-    }
-} # TODO: should log through uwsgi
-
-## ids.env
-# export AGAVE_CLIENT_KEY=DRL79L1DzP9vfzPdO5m31fKrkHka
-# export AGAVE_CLIENT_SECRET=84SW_ftBwrYTbADgpU9bgRabrcAa
-# export AGAVE_SUPER_TOKEN=dcdebec459a328f9d4834997f7f16d8
-# export AGAVE_TENANT_BASEURL=https://agave.iplantc.org/
-# export DJANGO_DEBUG=False
-
-# TODO: fix uwsgi conf reading thing
+    },
+}
 
 ##
 # Agave
 #
 # Tenant Configuration
-AGAVE_TENANT_ID = 'iplantc.org' # os.environ.get('AGAVE_TENANT_ID', 'iplantc.org')
-AGAVE_TENANT_BASEURL = 'https://agave.iplantc.org/' # os.environ.get('AGAVE_TENANT_BASEURL', 'https://agave.iplantc.org/')
+AGAVE_TENANT_ID = os.environ.get('AGAVE_TENANT_ID', 'iplantc.org')
+AGAVE_TENANT_BASEURL = os.environ.get('AGAVE_TENANT_BASEURL', 'https://agave.iplantc.org/')
 #
 # Client Configuration
-# AGAVE_CLIENT_KEY = 'DRL79L1DzP9vfzPdO5m31fKrkHka' # os.environ.get('AGAVE_CLIENT_KEY')
-# AGAVE_CLIENT_SECRET = '84SW_ftBwrYTbADgpU9bgRabrcAa' # os.environ.get('AGAVE_CLIENT_SECRET')
-# AGAVE_SUPER_TOKEN = 'dcdebec459a328f9d4834997f7f16d8' # os.environ.get('AGAVE_SUPER_TOKEN')
-AGAVE_CLIENT_KEY = 'dY72GkoQrGXKoJWEmTVYb6HE0ZYa'
-AGAVE_CLIENT_SECRET = '7vpFUOvGsUBnwodf5koZUZhXYTsa'
-AGAVE_SUPER_TOKEN = '79b3aaf72cb278d908b8256ea36ef90'
-#
+AGAVE_CLIENT_KEY = os.environ.get('AGAVE_CLIENT_KEY')
+AGAVE_CLIENT_SECRET = os.environ.get('AGAVE_CLIENT_SECRET')
+AGAVE_SUPER_TOKEN = os.environ.get('AGAVE_SUPER_TOKEN')
+
 # Other agave stuff
 AGAVE_TOKEN_SESSION_ID = 'agave_token'

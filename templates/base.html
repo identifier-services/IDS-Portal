@@ -14,24 +14,12 @@
 </head>
 <body>
     <div>
-        <header>
-	    <a href="{% url 'app:index' %}">
-    	        <strong style="color:#c00">Home</strong>
-	    </a>
-	    |
-	    <a href="{% url 'app:investigation_type_list' %}">
-    	        <strong style="color:#00c">Investigation Types</strong>
-	    </a>
-	    |
-	    <a href="{% url 'app:project_list' %}">
-    	        <strong style="color:#00c">Projects</strong>
-	    </a>
-	    |
-	    <a href="{% url 'login' %}">
-    	        <strong style="color:#0c0">Login</strong>
-	    </a>
-	    |
-	</header>
+    {% if user.is_authenticated %}
+        {% include "includes/authenticated_header.html" %}
+    {% else %}
+        {% include "includes/anonymous_header.html" %}
+    {% endif %}
+	<hr/>
 	<main>
             {% block content %}{% endblock %}
 	</main>

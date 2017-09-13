@@ -1,6 +1,7 @@
 *.py[cod]
 db.sqlite3
 migrations/
+media/
 *.swp
 *.env
 *.secret

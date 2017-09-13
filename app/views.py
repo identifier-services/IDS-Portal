@@ -5,6 +5,8 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import generic
 
+import logging
+
 from zipfile import ZipFile
 import csv
 
@@ -15,6 +17,8 @@ from .models import (InvestigationType, Project, ElementType,
 
 from .forms import ProjectForm
 
+logger = logging.getLogger(__name__)
+
 ##############
 # Base Views #
 ##############
@@ -24,6 +28,10 @@ class BaseGenericListView(generic.ListView):
     context_object_name = 'object_list'
 
     def get_context_data(self, **kwargs):
+
+        logger.debug('request user: %s' % self.request.user)
+        logger.debug('dir(request.user): %s' % dir(self.request.user))
+
         context = super(BaseGenericListView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
         context['verbose_name'] = verbose_name.title()
@@ -75,8 +83,7 @@ class BaseGenericCreateView(generic.CreateView):
                         parent_name: parent_class.objects.get(pk=parent_id)
                     })
                 except Exception as e:
-                    # logger.debug(e)
-                    print e
+                    logger.debug(e)
 
         return initial
 
@@ -109,8 +116,7 @@ class BaseGenericDeleteView(generic.DeleteView):
             try:
                 success_url = reverse('%s_detail' % parent_rel['field_name'])
             except Exception as e:
-                # logger.debug(e)
-                print e
+                logger.debug(e)
 
         return context
 
@@ -242,11 +248,10 @@ class ElementFieldDescriptorDetailView(generic.DetailView):
 
         try:
             context['value_type'] = filter(
-                lambda x, y=descriptor.value_type: x[0]==y, 
+                lambda x, y=descriptor.value_type_abbr: x[0]==y, 
                 descriptor.VALUE_TYPE_CHOICES)[0][1]
         except Exception as e:
-            # logger.debug(e)
-            print e
+            logger.debug(e)
 
         return context
 

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2>{{ verbose_name}} Detail</h2>
+    <h2>{{ verbose_name }} Detail</h2>
 
     {% if object.get_parent_relations %}
         <hr/>
@@ -21,7 +21,11 @@
     <h3>Attributes:</h3>
     <ul>
         {% for field in object.get_fields %}
-            <li><b>{{ field.label }}:</b> {{ field.value }}</li>
+            {% if field.url %}
+                <li><b>{{ field.label }}:</b> {{ field.url }}</li>
+            {% else %}
+                <li><b>{{ field.label }}:</b> {{ field.value }}</li>
+            {% endif %}
         {% endfor %}
     </ul>
 
