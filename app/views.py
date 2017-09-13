@@ -410,9 +410,9 @@ class ElementIntFieldValueUpdateView(BaseGenericUpdateView):
 class ElementIntFieldValueDeleteView(BaseGenericDeleteView):
     model = ElementIntFieldValue
 
-############################
+#############################
 # Element Float Field Value #
-############################
+#############################
 
 class ElementFloatFieldValueListView(BaseGenericListView):
     model = ElementFloatFieldValue
@@ -457,7 +457,7 @@ class ElementDateFieldValueDeleteView(BaseGenericDeleteView):
     model = ElementDateFieldValue
 
 ############################
-# Element Url Field Value #
+# Element Url Field Value  #
 ############################
 
 class ElementUrlFieldValueListView(BaseGenericListView):
