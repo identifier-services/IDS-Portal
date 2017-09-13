@@ -89,9 +89,6 @@ class Base(object):
 
     @classmethod
     def get_create_url(cls):
-
-        import pdb; pdb.set_trace()
-
         route = 'app:%s_create' % snake(cls.__name__)
         return reverse(route)
 
@@ -156,18 +153,81 @@ class InvestigationType(AbstractModel):
             logger.debug(e)
 
         for definition in definitions:
-            name = definition.get('name')
-            description = definition.get('description')
-            fields = definition.get('fields')
+            name = definition.get('name', '')
+            description = definition.get('description', '')
+            fields = definition.get('fields', [])
         
-            et = ElementType(
+            elem_type = ElementType(
                 name=name, 
                 description=description,
                 investigation_type=self
             )
 
-            et.save()     
+            elem_type.save()
 
+            for field in fields:
+                val_type = field.get('value type', '')
+                value_type_abbr = ElementFieldDescriptor.CHAR
+
+                try:
+                    value_type_abbr = filter(
+                        lambda x, y=val_type: x[1]==y, 
+                        ElementFieldDescriptor.VALUE_TYPE_CHOICES
+                    )[0][0]
+                except Exception as e:
+                    logger.debug(e)
+
+                elem_field_descr = ElementFieldDescriptor(
+                    label=field.get('name', ''),
+                    help_text=field.get('description', ''),
+                    value_type_abbr=value_type_abbr,
+                    required=field.get('required', False),
+                    element_type=elem_type,
+                )
+
+                elem_field_descr.save()
+
+        for definition in definitions:
+            rels = definition.get('rels', [])
+        
+            for rel in rels:
+                card = rel.get('cardinality', '')
+                card_abbr = RelationshipDefinition.ONE #default
+
+                try:
+                    card_abbr = filter(
+                        lambda x, y=card: x[1]==y, 
+                        RelationshipDefinition.CARDINALITIES)[0][0]
+                except Exception as e:
+                    logger.debug(e)
+
+                rel_type = rel.get('type', '')
+                rel_type_abbr = RelationshipDefinition.PART #default
+
+                try:
+                    rel_type_abbr = filter(
+                        lambda x, y=rel_type: x[1]==y, 
+                        RelationshipDefinition.RELATIONSHIP_TYPES)[0][0]
+                except Exception as e:
+                    logger.debug(e)
+
+                source_name = definition.get('name', '')
+                source = ElementType.objects.get(investigation_type=self, 
+                    name__exact=source_name)
+                target_name = rel.get('target', '')
+                target = ElementType.objects.get(investigation_type=self, 
+                    name__exact=target_name)
+
+                rel_def = RelationshipDefinition(
+                    source=source,
+                    target=target,
+                    rel_type_abbr=rel_type_abbr,
+                    card_abbr=card_abbr
+                )
+
+                print source, rel_type_abbr, rel_type,
+
+                rel_def.save()
 
     class Meta:
         verbose_name = "investigation type"
@@ -190,6 +250,37 @@ class Project(AbstractModel):
         # TODO: what's up with creating projects?
         # import pdb; pdb.set_trace()
         super(Project, self).save(*args, **kwargs)
+
+        if not self.investigation_type:
+            return
+
+        archive_file = self.archive.file
+        if not archive_file.name.split('.')[-1] == 'csv':
+            return
+        
+        element_types = ElementType.objects.filter(
+            investigation_type=self.investigation_type)
+
+        reader = csv.DictReader(archive_file, delimiter=str(u',').encode('utf-8'))
+        fieldnames = reader.fieldnames
+
+        rows = []
+        for row in read:
+            rows.append(row)
+
+        for element_type in element_types:
+            fields_names = [x['label'] for x in element_type.elementfielddescriptor_set.values()]
+            for row in rows:
+                pass
+                
+        #    elem = Element(element_type=element_type, project=self)
+        #    elem.save()
+        #    print element_type
+        #    for field_descriptor in\
+        #        element_type.elementfielddescriptor_set.values():
+        #            print '\t', field_descriptor['label']
+
+          
 
 
 class ElementType(AbstractModel):
@@ -301,9 +392,9 @@ class RelationshipDefinition(Base, models.Model):
     CONT = 'CONT'
 
     RELATIONSHIP_TYPES = (
-        (ORIG, 'origin'),
-        (PART, 'part'),
-        (ISIN, 'is input of'),
+        (ORIG, 'is origin of'),
+        (PART, 'is part of'),
+        (ISIN, 'is input to'),
         (ISOU, 'is output of'),
         (HASI, 'has input'),
         (HASO, 'has output'),
@@ -333,7 +424,7 @@ class RelationshipDefinition(Base, models.Model):
         (ZOM, 'zero one or many'),
     )
 
-    cardiniality_abbr = models.CharField(
+    card_abbr = models.CharField(
         'cardinality',
         max_length = 4,
         choices = CARDINALITIES,
@@ -353,15 +444,15 @@ class RelationshipDefinition(Base, models.Model):
     @property
     def verbose_cardinality(self):
         try:
-            return filter(lambda x, y=self.cardinality_abbr: x[0]==y, 
+            return filter(lambda x, y=self.card_abbr: x[0]==y, 
                 self.CARDINALITIES)[0][1]
         except Exception as e:
             logger.debug(e)
 
-        return self.rel_type_abbr
+        return self.card_abbr
 
     def __str__(self):
-        return '%s has a %s relationship to %s %s' % (
+        return '%s %s %s %s' % (
             self.source.name, 
             self.verbose_relationship_type, 
             self.verbose_cardinality,
