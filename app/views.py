@@ -45,6 +45,9 @@ class BaseGenericDetailView(generic.DetailView):
     context_object_name = 'object'
 
     def get_context_data(self, **kwargs):
+        # TODO: get rid of set_trace()
+        # import pdb; pdb.set_trace()
+
         context = super(BaseGenericDetailView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
         context['verbose_name'] = verbose_name.title() 

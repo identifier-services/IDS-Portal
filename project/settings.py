@@ -24,8 +24,7 @@ SECRET_KEY = 'g*y4d51va%ml2x_u1#(a73ptdrkbz*6$h%--&ju=*6j&=_smzx'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ['idsvc.org', 'www.idsvc.org', 'lite.idsvc.org']
+ALLOWED_HOSTS = ['idsvc.org', 'www.idsvc.org', 'lite.idsvc.org', 'localhost']
 
 
 # Application definition

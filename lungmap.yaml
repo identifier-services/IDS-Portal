@@ -8,6 +8,11 @@ fields:
 - name: Strain
 - name: TotalSets
 - name: Sex
+  description: gender of the specimen
+  value type: choice
+  choices:
+  - male
+  - female
 - name: TissueType
 - name: Age
 - name: DissectionTime
@@ -80,8 +85,8 @@ fields:
 - name: FileName
 - name: FilePath
 rels:
-- type: parent
-  character: is output of
+- type: is output of
+  cardinality: one
   target: process
  
 # ---

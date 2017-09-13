@@ -5,6 +5,11 @@ from django.db import models
 from django.urls import reverse
 
 import re
+import yaml
+import csv
+import logging
+
+logger = logging.getLogger(__name__)
 
 def snake(name):
     """
@@ -136,6 +141,31 @@ class InvestigationType(AbstractModel):
     definition_file = models.FileField('definition file(s)', upload_to='documents/%Y/%m/%d/', 
         blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        super(InvestigationType, self).save(*args, **kwargs)
+
+        # TODO: move this code somewhere else
+
+        definitions = []
+        try:
+            definitions = [x for x in yaml.load_all(self.definition_file.file)]
+        except Exception as e:
+            logger.debug(e)
+
+        for definition in definitions:
+            name = definition.get('name')
+            description = definition.get('description')
+            fields = definition.get('fields')
+        
+            et = ElementType(
+                name=name, 
+                description=description,
+                investigation_type=self
+            )
+
+            et.save()     
+
+
     class Meta:
         verbose_name = "investigation type"
 
@@ -167,13 +197,6 @@ class ElementType(AbstractModel):
 
     class Meta:
         verbose_name = "element type"
-
-
-class Element(AbstractModel):
-    """Model representing an individual element."""
-
-    element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
-    project = models.ForeignKey(Project, on_delete=models.CASCADE) 
 
 
 class ElementFieldDescriptor(Base, models.Model):
@@ -249,6 +272,91 @@ class ElementFieldDescriptor(Base, models.Model):
 
     class Meta:
         verbose_name = "element field descriptor"
+
+
+class RelationshipDefinition(Base, models.Model):
+    """Describes a the relationships that may exist between element types."""
+    source = models.ForeignKey(ElementType, on_delete=models.CASCADE, related_name='source_object')
+    target = models.ForeignKey(ElementType, on_delete=models.CASCADE, related_name='target_object')
+    
+    ORIG = 'ORIG'
+    PART = 'PART'
+    ISIN = 'ISIN'
+    ISOU = 'ISOU'
+    HASI = 'HASI'
+    HASO = 'HASO'
+    CONT = 'CONT'
+
+    RELATIONSHIP_TYPES = (
+        (ORIG, 'origin'),
+        (PART, 'part'),
+        (ISIN, 'is input of'),
+        (ISOU, 'is output of'),
+        (HASI, 'has input'),
+        (HASO, 'has output'),
+        (CONT, 'contains'),
+    )
+
+    rel_type_abbr = models.CharField(
+        "relationship type",
+        max_length = 4,
+        choices = RELATIONSHIP_TYPES,
+        default=PART,
+    )
+
+    ZERO = 'ZERO'
+    ONE = 'ONE'
+    ZO = 'ZO'
+    MANY = 'MANY'
+    OM = 'OM'
+    ZOM = 'ZOM'
+
+    CARDINALITIES = (
+        (ZERO, 'zero'),
+        (ONE, 'one'),
+        (ZO, 'zero or one'),
+        (MANY, 'many'),
+        (OM, 'one or many'),
+        (ZOM, 'zero one or many'),
+    )
+
+    cardiniality_abbr = models.CharField(
+        'cardinality',
+        max_length = 4,
+        choices = CARDINALITIES,
+        default=ONE,
+    )
+
+    def __str__(self):
+        rel = self.rel_type_abbr
+
+        try:
+            rel = filter(lambda x, y=self.rel_type_abbr: x[0]==y, 
+                self.RELATIONSHIP_TYPES)[0][1]
+        except Exception as e:
+            logger.debug(e)
+
+        card = self.cardinality_abbr
+
+        try:
+            card = filter(lambda x, y=self.cardinality_abbr: x[0]==y, 
+                self.CARDINALITIES)[0][1]
+        except Exception as e:
+            logger.debug(e)
+
+        return '%s has a %s relationship to %s %s' % (
+            self.source.name, 
+            rel, 
+            card, 
+            self.target.name
+        )
+
+
+class Element(AbstractModel):
+    """Model representing an individual element."""
+
+    element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
+    project = models.ForeignKey(Project, on_delete=models.CASCADE) 
 
 
 class AbstractElementFieldValue(Base, models.Model):

@@ -1,0 +1,39 @@
+name: specimen
+description: physical thing that we take samples from
+fields:
+- name: location
+  description: place where specimen was collected
+  value type: short text
+  required: false
+- name: collection date
+  description: date when the specmen was collected
+  value type: date
+  required: false
+- name: color
+  description: describe specimen appearance
+  value type: short text
+  required: false
+
+---
+
+name: chunk
+description: individual slice taken from a specimen for analysis
+fields:
+- name: location
+  description: location of chunk in specimen
+  value type: short text
+  required: false
+- name: size
+  description: size of chunk
+  value type: short text # or more complicated type
+  required: false
+- name: orientation
+  description: direction of slice
+  value type: choice
+  choices:
+  - vertical
+  - horizontal
+  required: false
+rels:
+- type: parent
+  object: specimen
