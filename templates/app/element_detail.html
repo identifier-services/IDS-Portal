@@ -35,7 +35,9 @@
                 {% endif %}
         
                 <a href={{ value.action_url }}> {{ value.action }}</a> 
+                {% if value.help_text  %}
                 ({{ value.help_text }})
+                {% endif %}
             </li>
         {% endfor %}
     </ul>

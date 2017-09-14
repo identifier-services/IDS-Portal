@@ -147,7 +147,7 @@ class InvestigationType(AbstractModel):
     def save(self, *args, **kwargs):
         super(InvestigationType, self).save(*args, **kwargs)
 
-        # TODO: move this code somewhere else
+        # TODO: move this code somewhere else, and don't run it in the django process!
 
         definitions = []
         try:
@@ -313,45 +313,41 @@ class Project(AbstractModel):
                 value_string = str(field_values)
 
                 # check for uniqueness
-                if not value_string in unique_element_strings:
+                if value_string in unique_element_strings:
+                    continue
                     
-                    # create a new element
-                    new_element = Element(element_type=element_type, 
-                        project=self)
+                # create a new element
+                new_element = Element(id=uuid.uuid4(),
+                    element_type=element_type, project=self)
 
-                    # save to get a unique id
-                    # (might be more efficient to give it a unique 
-                    # id before saving and use that for the later fks)
+                # run through all the field descriptors again to create
+                # th new values
+                for field_descriptor in field_descriptors:
+                    field_value = field_values[field_descriptor.label]
+
+                    new_value = field_descriptor.value_type(
+                        value=field_value,
+                        element_field_descriptor=field_descriptor,
+                        element=new_element)
+                    new_value.save()
+
+                # add value string to set
+                unique_element_strings.add(value_string)
+
+                # we need a display field
+                # TODO: this display field issue needs a lot more thought! 
+                #   and changes to the model, we don't need name/descr on
+                #   elements, we just need to know which field is the
+                #   display field
+                if field_values:
+                    first_value = next(iter(field_values.items()))
+                    display_value = '%s: %s - %s' % (
+                        element_type.name.title(),
+                        first_value[0],
+                        first_value[1],
+                    )
+                    new_element.name=display_value
                     new_element.save()
-
-                    # run through all the field descriptors again to create
-                    # th new values
-                    for field_descriptor in field_descriptors:
-                        field_value = field_values[field_descriptor.label]
-
-                        new_value = field_descriptor.value_type(
-                            value=field_value,
-                            element_field_descriptor=field_descriptor,
-                            element=new_element)
-                        new_value.save()
-
-                    # add value string to set
-                    unique_element_strings.add(value_string)
-
-                    # we need a display field
-                    # TODO: this display field issue needs a lot more thought! 
-                    #   and changes to the model, we don't need name/descr on
-                    #   elements, we just need to know which field is the
-                    #   display field
-                    if field_values:
-                        first_value = next(iter(field_values.items()))
-                        display_value = '%s: %s - %s' % (
-                            element_type.name.title(),
-                            first_value[0],
-                            first_value[1],
-                        )
-                        new_element.name=display_value
-                        new_element.save()
 
 
 class ElementType(AbstractModel):

@@ -279,7 +279,7 @@ class RelationshipDefinitionCreateView(BaseGenericCreateView):
 
 class RelationshipDefinitionDetailView(generic.DetailView):
     model = RelationshipDefinition
-    template_name = 'app/field_descriptor_detail.html'
+    template_name = 'app/relationship_definition_detail.html'
 
     def get_context_data(self, **kwargs):
         context = super(RelationshipDefinitionDetailView, self)\
@@ -292,7 +292,7 @@ class RelationshipDefinitionDetailView(generic.DetailView):
             logger.debug(e)
 
         try:
-            context['rel_type'] = definition.verbose_cardinality
+            context['card'] = definition.verbose_cardinality
         except Exception as e:
             logger.debug(e)
 
