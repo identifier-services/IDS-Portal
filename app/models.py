@@ -271,6 +271,10 @@ class Project(AbstractModel):
         element_types = ElementType.objects.filter(
             investigation_type=self.investigation_type)
 
+        # we're going to stick values in here the first time we see them
+        # if values are not unique, we do not create a new element
+        unique_element_strings = set()
+
         # the following seems fairly inefficient, but it works to create 
         # unique elements (relationships between elements are established
         # in a subsequent step).
@@ -279,17 +283,38 @@ class Project(AbstractModel):
         # - for each row, loop through each (element type) field
         # - get the field value from the csv and store in list of k,v pairs
         # - use complete list of k,v pairs to create a new element
-        # - if this element is unique (not already in db) save, if not, discard  
+        # - if this element is unique (not already in db) save  
         #   - slightly more complicated than just checking if model instance is
         #     unqiue, because you actually need to check all the value tables
-        #     that point to the element. different idea, instead of checking
-        #     db, create everything in dictionaries, then create unique
-        #     elements from dictionaries in the database.
+        #     that point to the element. a different idea, instead of querying
+        #     db, create a hashable record of the values and store in a set
         for element_type in element_types:
-            fields_names = [x['label'] for x in\
-                element_type.elementfielddescriptor_set.values()]
+            # create a new element, we'll only save it if the values are unique
+            new_element = Element(element_type=element_tpye, project=self)
+
+            # get field defs for this element type
+            fields_descriptors = element_type.elementfielddescriptor_set.all()
+
+            # loop through all rows in the csv
             for row in rows:
-                pass
+
+                for field_descriptor in field_descriptors:
+                    field_name = field_descriptor.name
+                    field_value = row.get(field_name)
+                    if field_value:
+                        import pdb; pdb.set_trace()
+
+                # loop through
+                for field_name in field_names:
+                    element_values.update(field_name,
+                        row.get('field_name', ''))
+                # we need a hashable object
+                value_string = str(element_values)
+                # have we seen this set of values before?
+                if not value_string in unique_element_strings:
+                    unique_element_strings.add(value_string)
+                    # create the element
+                    # create field values pointing to element
                 
         #    elem = Element(element_type=element_type, project=self)
         #    elem.save()
