@@ -291,6 +291,7 @@ class Project(AbstractModel):
         #     unqiue, because you actually need to check all the value tables
         #     that point to the element. a different idea, instead of querying
         #     db, create a hashable record of the values and store in a set
+        # import pdb; pdb.set_trace()
         for element_type in element_types:
 
             # get field defs for this element type
@@ -538,6 +539,19 @@ class Element(AbstractModel):
 
     element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
     project = models.ForeignKey(Project, on_delete=models.CASCADE) 
+
+
+class Relationship(Base, models.Model):
+    """Relates two elements"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    source = models.ForeignKey(Element, on_delete=models.CASCADE, related_name='source_object')
+    target = models.ForeignKey(Element, on_delete=models.CASCADE, related_name='target_object')
+
+    def __str__(self):
+        return '%s - %s' % (
+            self.source.name, 
+            self.target.name
+        )
 
 
 class AbstractElementFieldValue(Base, models.Model):
