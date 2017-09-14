@@ -238,39 +238,53 @@ class Project(AbstractModel):
 
     investigation_type = models.ForeignKey(InvestigationType, on_delete=models.CASCADE) 
 
-    # TODO: rename? bulk? sheets?
     archive = models.FileField('bulk upload', upload_to='documents/%Y/%m/%d/', 
         blank=True, null=True)
 
     # TODO: add fk to owner/creator (auth.user)
-
     # TODO: add many-to-many to collaborators
 
     def save(self, *args, **kwargs):
-        # TODO: what's up with creating projects?
-        # import pdb; pdb.set_trace()
         super(Project, self).save(*args, **kwargs)
 
+        # TODO: create new investigation_type if user does not select existing
         if not self.investigation_type or not self.archive.file:
             return
 
+        # TODO: handle zip of multiple csv, or just multiple csv uploads
         archive_file = self.archive.file
         if not archive_file.name.split('.')[-1] == 'csv':
             return
         
-        element_types = ElementType.objects.filter(
-            investigation_type=self.investigation_type)
+        reader = csv.DictReader(archive_file, 
+            delimiter=str(u',').encode('utf-8'))
 
-        reader = csv.DictReader(archive_file, delimiter=str(u',').encode('utf-8'))
         rows = []
+        # read entire csv into memory, could be prohibitive for huge sheets
         for row in reader:
             rows.append(row)
 
+        # get list of elements for this investigation type
+        element_types = ElementType.objects.filter(
+            investigation_type=self.investigation_type)
+
+        # the following seems fairly inefficient, but it works to create 
+        # unique elements (relationships between elements are established
+        # in a subsequent step).
+        # - loop though each element type definition
+        # - for each element type, loop through each row of csv
+        # - for each row, loop through each (element type) field
+        # - get the field value from the csv and store in list of k,v pairs
+        # - use complete list of k,v pairs to create a new element
+        # - if this element is unique (not already in db) save, if not, discard  
+        #   - slightly more complicated than just checking if model instance is
+        #     unqiue, because you actually need to check all the value tables
+        #     that point to the element. different idea, instead of checking
+        #     db, create everything in dictionaries, then create unique
+        #     elements from dictionaries in the database.
         for element_type in element_types:
-
-            import pdb; pdb.set_trace()
-
-            fields_names = [x['label'] for x in element_type.elementfielddescriptor_set.values()]
+            fields_names = [x['label'] for x in\
+                element_type.elementfielddescriptor_set.values()]
             for row in rows:
                 pass
                 
