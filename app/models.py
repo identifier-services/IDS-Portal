@@ -275,6 +275,9 @@ class Project(AbstractModel):
         # if values are not unique, we do not create a new element
         unique_element_strings = set()
 
+        # temporarily hold field values
+        field_values = {}
+
         # the following seems fairly inefficient, but it works to create 
         # unique elements (relationships between elements are established
         # in a subsequent step).
@@ -289,41 +292,66 @@ class Project(AbstractModel):
         #     that point to the element. a different idea, instead of querying
         #     db, create a hashable record of the values and store in a set
         for element_type in element_types:
-            # create a new element, we'll only save it if the values are unique
-            new_element = Element(element_type=element_tpye, project=self)
 
             # get field defs for this element type
-            fields_descriptors = element_type.elementfielddescriptor_set.all()
+            field_descriptors = element_type.elementfielddescriptor_set.all()
+
+            # clear previous element's values
+            field_values.clear()
 
             # loop through all rows in the csv
             for row in rows:
 
+                # grab all field values for this element in this row
                 for field_descriptor in field_descriptors:
-                    field_name = field_descriptor.name
+                    field_name = field_descriptor.label
                     field_value = row.get(field_name)
                     if field_value:
-                        import pdb; pdb.set_trace()
+                        field_values.update({field_name: field_value})
 
-                # loop through
-                for field_name in field_names:
-                    element_values.update(field_name,
-                        row.get('field_name', ''))
-                # we need a hashable object
-                value_string = str(element_values)
-                # have we seen this set of values before?
+                # we need a hashable object to check for uniqueness
+                value_string = str(field_values)
+
+                # check for uniqueness
                 if not value_string in unique_element_strings:
-                    unique_element_strings.add(value_string)
-                    # create the element
-                    # create field values pointing to element
-                
-        #    elem = Element(element_type=element_type, project=self)
-        #    elem.save()
-        #    print element_type
-        #    for field_descriptor in\
-        #        element_type.elementfielddescriptor_set.values():
-        #            print '\t', field_descriptor['label']
+                    
+                    # create a new element
+                    new_element = Element(element_type=element_type, 
+                        project=self)
 
-          
+                    # save to get a unique id
+                    # (might be more efficient to give it a unique 
+                    # id before saving and use that for the later fks)
+                    new_element.save()
+
+                    # run through all the field descriptors again to create
+                    # th new values
+                    for field_descriptor in field_descriptors:
+                        field_value = field_values[field_descriptor.label]
+
+                        new_value = field_descriptor.value_type(
+                            value=field_value,
+                            element_field_descriptor=field_descriptor,
+                            element=new_element)
+                        new_value.save()
+
+                    # add value string to set
+                    unique_element_strings.add(value_string)
+
+                    # we need a display field
+                    # TODO: this display field issue needs a lot more thought! 
+                    #   and changes to the model, we don't need name/descr on
+                    #   elements, we just need to know which field is the
+                    #   display field
+                    if field_values:
+                        first_value = next(iter(field_values.items()))
+                        display_value = '%s: %s - %s' % (
+                            element_type.name.title(),
+                            first_value[0],
+                            first_value[1],
+                        )
+                        new_element.name=display_value
+                        new_element.save()
 
 
 class ElementType(AbstractModel):
@@ -401,6 +429,10 @@ class ElementFieldDescriptor(Base, models.Model):
             self.REL: ElementCharFieldValue, # TODO: add rel field 
         } 
         return mapping
+
+    @property
+    def value_type(self):
+        return self.value_type_map[self.value_type_abbr]
 
     @property
     def verbose_value_type(self):

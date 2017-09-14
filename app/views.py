@@ -339,8 +339,7 @@ class ElementDetailView(generic.DetailView):
             help_text = descriptor.help_text
             
             # get the values
-            value_type_abbr = descriptor.value_type_abbr
-            value_type = descriptor.value_type_map[value_type_abbr]
+            value_type = descriptor.value_type
             # TODO: what if more than one field value? how to prevent?
             field_value = value_type.objects.select_related()\
                 .filter(element_field_descriptor=descriptor).first()
