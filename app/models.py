@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import models
 from django.urls import reverse
 
+import uuid
 import re
 import yaml
 import csv
@@ -124,6 +125,8 @@ class AbstractModel(Base, models.Model):
         except Exception as e:
             # logger.debug(e)
             print e
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     name = models.CharField(max_length=200, 
         help_text="Enter a name.", blank=True)
@@ -248,7 +251,7 @@ class Project(AbstractModel):
         super(Project, self).save(*args, **kwargs)
 
         # TODO: create new investigation_type if user does not select existing
-        if not self.investigation_type or not self.archive.file:
+        if not self.investigation_type or not self.archive:
             return
 
         # TODO: handle zip of multiple csv, or just multiple csv uploads
@@ -314,6 +317,8 @@ class ElementFieldDescriptor(Base, models.Model):
     #############
     # Attributes
     #############
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     label = models.CharField(max_length=200, 
         help_text="Enter a label for this field.", blank=True)
@@ -394,6 +399,7 @@ class ElementFieldDescriptor(Base, models.Model):
 
 class RelationshipDefinition(Base, models.Model):
     """Describes a the relationships that may exist between element types."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     source = models.ForeignKey(ElementType, on_delete=models.CASCADE, related_name='source_object')
     target = models.ForeignKey(ElementType, on_delete=models.CASCADE, related_name='target_object')
     
@@ -483,6 +489,8 @@ class Element(AbstractModel):
 
 class AbstractElementFieldValue(Base, models.Model):
     """Abstract class for various types of element field values"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     ###############
     # Foreign Keys

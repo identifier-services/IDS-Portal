@@ -20,17 +20,17 @@ urlpatterns = [
         name='investigation_type_create'),
 
     # detail
-    url(r'^investigation-type/(?P<pk>\d+)$', 
+    url(r'^investigation-type/(?P<pk>[0-9a-f-]+)$', 
         views.InvestigationTypeDetailView.as_view(), 
         name='investigation_type_detail'),
 
     # update
-    url(r'^investigation-type/(?P<pk>\d+)/update/$', 
+    url(r'^investigation-type/(?P<pk>[0-9a-f-]+)/update/$', 
         views.InvestigationTypeUpdateView.as_view(), 
         name='investigation_type_update'),
 
     # delete
-    url(r'^investigation-type/(?P<pk>\d+)/delete/$', 
+    url(r'^investigation-type/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.InvestigationTypeDeleteView.as_view(), 
         name='investigation_type_delete'),
 
@@ -49,17 +49,17 @@ urlpatterns = [
         name='project_create'),
     
     # detail
-    url(r'^project/(?P<pk>\d+)$', 
+    url(r'^project/(?P<pk>[0-9a-f-]+)$', 
         views.ProjectDetailView.as_view(), 
         name='project_detail'),
 
     # update
-    url(r'^project/(?P<pk>\d+)/update/$', 
+    url(r'^project/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ProjectUpdateView.as_view(), 
         name='project_update'),
 
     # delete
-    url(r'^project/(?P<pk>\d+)/delete/$', 
+    url(r'^project/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ProjectDeleteView.as_view(), 
         name='project_delete'),
 
@@ -78,16 +78,16 @@ urlpatterns = [
         name='element_type_create'),
 
     # detail
-    url(r'^element-type/(?P<pk>\d+)$', 
+    url(r'^element-type/(?P<pk>[0-9a-f-]+)$', 
         views.ElementTypeDetailView.as_view(), 
         name='element_type_detail'),
 
     # update
-    url(r'^element-type/(?P<pk>\d+)/update/$', 
+    url(r'^element-type/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementTypeUpdateView.as_view(), 
         name='element_type_update'),
     # delete
-    url(r'^element-type/(?P<pk>\d+)/delete/$', 
+    url(r'^element-type/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementTypeDeleteView.as_view(), 
         name='element_type_delete'),
 
@@ -106,17 +106,17 @@ urlpatterns = [
         name='element_field_descriptor_create'),
     
     # detail
-    url(r'^element-field-descriptor/(?P<pk>\d+)$', 
+    url(r'^element-field-descriptor/(?P<pk>[0-9a-f-]+)$', 
         views.ElementFieldDescriptorDetailView.as_view(), 
         name='element_field_descriptor_detail'),
     
     # update
-    url(r'^element-field-descriptor/(?P<pk>\d+)/update/$', 
+    url(r'^element-field-descriptor/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementFieldDescriptorUpdateView.as_view(), 
         name='element_field_descriptor_update'),
     
     # delete
-    url(r'^element-field-descriptor/(?P<pk>\d+)/delete/$', 
+    url(r'^element-field-descriptor/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementFieldDescriptorDeleteView.as_view(), 
         name='element_field_descriptor_delete'),
 
@@ -135,16 +135,16 @@ urlpatterns = [
         name='relationship_definition_create'),
 
     # detail
-    url(r'^relationship-definition/(?P<pk>\d+)$', 
+    url(r'^relationship-definition/(?P<pk>[0-9a-f-]+)$', 
         views.RelationshipDefinitionDetailView.as_view(), 
         name='relationship_definition_detail'),
 
     # update
-    url(r'^relationship-definition/(?P<pk>\d+)/update/$', 
+    url(r'^relationship-definition/(?P<pk>[0-9a-f-]+)/update/$', 
         views.RelationshipDefinitionUpdateView.as_view(), 
         name='relationship_definition_update'),
     # delete
-    url(r'^relationship-definition/(?P<pk>\d+)/delete/$', 
+    url(r'^relationship-definition/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.RelationshipDefinitionDeleteView.as_view(), 
         name='relationship_definition_delete'),
 
@@ -163,17 +163,17 @@ urlpatterns = [
         name='element_create'),
     
     # detail
-    url(r'^element/(?P<pk>\d+)$', 
+    url(r'^element/(?P<pk>[0-9a-f-]+)$', 
         views.ElementDetailView.as_view(), 
         name='element_detail'),
     
     # update
-    url(r'^element/(?P<pk>\d+)/update/$', 
+    url(r'^element/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementUpdateView.as_view(), 
         name='element_update'),
     
     # delete
-    url(r'^element/(?P<pk>\d+)/delete/$', 
+    url(r'^element/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementDeleteView.as_view(), 
         name='element_delete'),
 
@@ -192,17 +192,17 @@ urlpatterns = [
         name='element_char_field_value_create'),
     
     # detail
-    url(r'^element-char-field-value/(?P<pk>\d+)$', 
+    url(r'^element-char-field-value/(?P<pk>[0-9a-f-]+)$', 
         views.ElementCharFieldValueDetailView.as_view(), 
         name='element_char_field_value_detail'),
     
     # update
-    url(r'^element-char-field-value/(?P<pk>\d+)/update/$', 
+    url(r'^element-char-field-value/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementCharFieldValueUpdateView.as_view(), 
         name='element_char_field_value_update'),
     
     # delete
-    url(r'^element-char-field-value/(?P<pk>\d+)/delete/$', 
+    url(r'^element-char-field-value/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementCharFieldValueDeleteView.as_view(), 
         name='element_char_field_value_delete'),
 
@@ -221,17 +221,17 @@ urlpatterns = [
         name='element_text_field_value_create'),
     
     # detail
-    url(r'^element-text-field-value/(?P<pk>\d+)$', 
+    url(r'^element-text-field-value/(?P<pk>[0-9a-f-]+)$', 
         views.ElementTextFieldValueDetailView.as_view(), 
         name='element_text_field_value_detail'),
     
     # update
-    url(r'^element-text-field-value/(?P<pk>\d+)/update/$', 
+    url(r'^element-text-field-value/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementTextFieldValueUpdateView.as_view(), 
         name='element_text_field_value_update'),
     
     # delete
-    url(r'^element-text-field-value/(?P<pk>\d+)/delete/$', 
+    url(r'^element-text-field-value/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementTextFieldValueDeleteView.as_view(), 
         name='element_text_field_value_delete'),
 
@@ -250,17 +250,17 @@ urlpatterns = [
         name='element_int_field_value_create'),
     
     # detail
-    url(r'^element-int-field-value/(?P<pk>\d+)$', 
+    url(r'^element-int-field-value/(?P<pk>[0-9a-f-]+)$', 
         views.ElementIntFieldValueDetailView.as_view(), 
         name='element_int_field_value_detail'),
     
     # update
-    url(r'^element-int-field-value/(?P<pk>\d+)/update/$', 
+    url(r'^element-int-field-value/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementIntFieldValueUpdateView.as_view(), 
         name='element_int_field_value_update'),
     
     # delete
-    url(r'^element-int-field-value/(?P<pk>\d+)/delete/$', 
+    url(r'^element-int-field-value/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementIntFieldValueDeleteView.as_view(), 
         name='element_int_field_value_delete'),
 
@@ -279,17 +279,17 @@ urlpatterns = [
         name='element_float_field_value_create'),
     
     # detail
-    url(r'^element-float-field-value/(?P<pk>\d+)$', 
+    url(r'^element-float-field-value/(?P<pk>[0-9a-f-]+)$', 
         views.ElementFloatFieldValueDetailView.as_view(), 
         name='element_float_field_value_detail'),
     
     # update
-    url(r'^element-float-field-value/(?P<pk>\d+)/update/$', 
+    url(r'^element-float-field-value/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementFloatFieldValueUpdateView.as_view(), 
         name='element_float_field_value_update'),
     
     # delete
-    url(r'^element-float-field-value/(?P<pk>\d+)/delete/$', 
+    url(r'^element-float-field-value/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementFloatFieldValueDeleteView.as_view(), 
         name='element_float_field_value_delete'),
 
@@ -308,17 +308,17 @@ urlpatterns = [
         name='element_date_field_value_create'),
     
     # detail
-    url(r'^element-date-field-value/(?P<pk>\d+)$', 
+    url(r'^element-date-field-value/(?P<pk>[0-9a-f-]+)$', 
         views.ElementDateFieldValueDetailView.as_view(), 
         name='element_date_field_value_detail'),
     
     # update
-    url(r'^element-date-field-value/(?P<pk>\d+)/update/$', 
+    url(r'^element-date-field-value/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementDateFieldValueUpdateView.as_view(), 
         name='element_date_field_value_update'),
     
     # delete
-    url(r'^element-date-field-value/(?P<pk>\d+)/delete/$', 
+    url(r'^element-date-field-value/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementDateFieldValueDeleteView.as_view(), 
         name='element_date_field_value_delete'),
 
@@ -337,17 +337,17 @@ urlpatterns = [
         name='element_url_field_value_create'),
     
     # detail
-    url(r'^element-url-field-value/(?P<pk>\d+)$', 
+    url(r'^element-url-field-value/(?P<pk>[0-9a-f-]+)$', 
         views.ElementUrlFieldValueDetailView.as_view(), 
         name='element_url_field_value_detail'),
     
     # update
-    url(r'^element-url-field-value/(?P<pk>\d+)/update/$', 
+    url(r'^element-url-field-value/(?P<pk>[0-9a-f-]+)/update/$', 
         views.ElementUrlFieldValueUpdateView.as_view(), 
         name='element_url_field_value_update'),
     
     # delete
-    url(r'^element-url-field-value/(?P<pk>\d+)/delete/$', 
+    url(r'^element-url-field-value/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementUrlFieldValueDeleteView.as_view(), 
         name='element_url_field_value_delete'),
 ]
