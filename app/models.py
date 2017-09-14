@@ -251,7 +251,7 @@ class Project(AbstractModel):
         # import pdb; pdb.set_trace()
         super(Project, self).save(*args, **kwargs)
 
-        if not self.investigation_type:
+        if not self.investigation_type or not self.archive.file:
             return
 
         archive_file = self.archive.file
@@ -262,13 +262,14 @@ class Project(AbstractModel):
             investigation_type=self.investigation_type)
 
         reader = csv.DictReader(archive_file, delimiter=str(u',').encode('utf-8'))
-        fieldnames = reader.fieldnames
-
         rows = []
-        for row in read:
+        for row in reader:
             rows.append(row)
 
         for element_type in element_types:
+
+            import pdb; pdb.set_trace()
+
             fields_names = [x['label'] for x in element_type.elementfielddescriptor_set.values()]
             for row in rows:
                 pass
@@ -360,12 +361,11 @@ class ElementFieldDescriptor(Base, models.Model):
     @property
     def verbose_value_type(self):
         try:
-            return filter(lambda x, y=self.value_type_abbr: x[0]==y, 
-                self.VAlUE_TYPE_CHOICES)[0][1]
+            return filter(lambda x, y=self.value_type_abbr: x[0]==y,self.VALUE_TYPE_CHOICES)[0][1]
         except Exception as e:
             logger.debug(e)
 
-        return self.rel_type_abbr
+        return self.value_type_abbr
 
     ##########
     # Methods
