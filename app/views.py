@@ -10,9 +10,9 @@ import logging
 from zipfile import ZipFile
 import csv
 
-from .models import (InvestigationType, Project, ElementType, 
-    RelationshipDefinition, ElementFieldDescriptor, Element, 
-    ElementCharFieldValue, ElementTextFieldValue, ElementIntFieldValue, 
+from .models import (InvestigationType, Project, ElementType,
+    RelationshipDefinition, ElementFieldDescriptor, Element,
+    ElementCharFieldValue, ElementTextFieldValue, ElementIntFieldValue,
     ElementFloatFieldValue, ElementDateFieldValue, ElementUrlFieldValue)
 
 from .forms import ProjectForm
@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 class BaseGenericListView(generic.ListView):
     template_name = 'app/generic_list.html'
     context_object_name = 'object_list'
+    paginate_by = 25
 
     def get_context_data(self, **kwargs):
 
@@ -45,12 +46,9 @@ class BaseGenericDetailView(generic.DetailView):
     context_object_name = 'object'
 
     def get_context_data(self, **kwargs):
-        # TODO: get rid of set_trace()
-        # import pdb; pdb.set_trace()
-
         context = super(BaseGenericDetailView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
-        context['verbose_name'] = verbose_name.title() 
+        context['verbose_name'] = verbose_name.title()
         context['type_name'] = verbose_name.replace(' ', '_')
         return context
 
@@ -94,7 +92,7 @@ class BaseGenericCreateView(generic.CreateView):
 class BaseGenericUpdateView(generic.UpdateView):
     template_name = 'app/generic_form.html'
     context_object_name = 'object'
-    fields = '__all__' 
+    fields = '__all__'
 
 
 class BaseGenericDeleteView(generic.DeleteView):
@@ -112,7 +110,7 @@ class BaseGenericDeleteView(generic.DeleteView):
         context_object = context['object']
         parent_rels = context_object.get_parent_relations()
         if parent_rels:
-            
+
             # just get the first parent
             parent_rel = next(iter(parent_rels))
 
@@ -166,31 +164,7 @@ class ProjectListView(BaseGenericListView):
 
 class ProjectCreateView(BaseGenericCreateView):
     model = Project
-    # template_name = 'app/project_form.html'
 
-    # def post(self, request, *args, **kwargs):
-    #     if request.FILES['bulk_upload']:
-    #         bulk_upload = request.FILES['bulk_upload']
-    #         zf = ZipFile(bulk_upload)
-    #         for filename in zf.namelist():
-    #             data = zf.read(filename).split('\n')
-
-    #            reader = csv.DictReader(data, delimiter=str('\t'))
-
-    #             name = '_'.join(filename.split('.')[:-1])
-    #             fields = reader.fieldnames
-
-    #             elements = []
-
-    #             for row in reader:
-    #                 elements.append(row)
-
-    #             element_types.append({
-    #                 'name': name,
-    #                 'fields': fields,
-    #                 'elements': elements
-    #             })
-    #     return super(ProjectCreateView, self).post(request, *args, **kwargs)
 
 class ProjectDetailView(BaseGenericDetailView):
     model = Project
