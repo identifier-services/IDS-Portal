@@ -5,7 +5,7 @@
 
     {% if object.get_parent_relations %}
         <hr/>
-        <h3>Related:</h3>
+        <h3>Parents:</h3>
         <ul>
             {% for parent_rel in object.get_parent_relations %}
                 <li><b>{{ parent_rel.verbose_name|title }}:</b> 
@@ -39,6 +39,19 @@
                 ({{ value.help_text }})
                 {% endif %}
             </li>
+        {% endfor %}
+    </ul>
+
+    <hr/>
+    <h3>Siblings:</h3>
+    <ul>
+        <!--<h4>Forward:</h4>-->
+        {% for sib in object.forward_relationships.all %}
+            <li><a href="{{ sib.target.get_absolute_url}}">{{ sib.target }}</a></li>
+        {% endfor %}
+        <!--<h4>Reverse:</h4>-->
+        {% for sib in object.reverse_relationships.all %}
+            <li><a href="{{ sib.source.get_absolute_url}}">{{ sib.source }}</a></li>
         {% endfor %}
     </ul>
 

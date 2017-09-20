@@ -337,9 +337,6 @@ class Project(AbstractModel):
         # if values are not unique, we do not create a new element
         unique_element_strings = set()
 
-        # temporarily hold field values
-        field_values = {}
-
         # the following seems fairly inefficient, but it works to create 
         # unique elements (relationships between elements are established
         # in a subsequent step).
@@ -352,65 +349,137 @@ class Project(AbstractModel):
         # - save element to db and store string in unique set  
         for element_type in element_types:
 
+            pk_id = None
+
             # get field defs for this element type
             field_descriptors = element_type.elementfielddescriptor_set.all()
 
-            # clear previous element's values
-            field_values.clear()
-
             # loop through all rows in the csv
             for row in rows:
+
+                # temporarily hold field values
+                field_values = {}
+                descriptor_values = []
 
                 # grab all field values for this element in this row
                 for field_descriptor in field_descriptors:
                     field_name = field_descriptor.label
                     field_value = row.get(field_name)
                     if field_value:
+                        # use this to check for uniqueness
                         field_values.update({field_name: field_value})
+                        # use this to create a new field_value if unique
+                        descriptor_values.append([
+                            field_descriptor.value_type, 
+                            field_value,
+                            field_descriptor,
+                        ])
 
                 # we need a hashable object to check for uniqueness
                 value_string = str(field_values)
 
                 # check for uniqueness
                 if value_string in unique_element_strings:
-                    continue
-                    
-                with transaction.atomic():
-                    # create a new element
-                    new_element = Element(id=uuid.uuid4(),
-                        element_type=element_type, project=self)
 
-                    # run through all the field descriptors again to create
-                    # the new values
-                    for field_descriptor in field_descriptors:
-                        field_value = field_values[field_descriptor.label]
+                    # this is really hacky, but when we run through
+                    # the rows again, if we see that descriptor values
+                    # is None, we know we don't have to create this
+                    # element, it's id is only there for reference.
+                    descriptor_values = None
 
-                        new_value = field_descriptor.value_type(
-                            value=field_value,
-                            element_field_descriptor=field_descriptor,
-                            element=new_element)
-                        new_value.save()
+                else:
 
-                    # add value string to set
-                    unique_element_strings.add(value_string)
+                    # if new element, create a new unique id
+                    pk_id = uuid.uuid4()
 
-                    # we need a display field
-                    # TODO: this display field issue needs a lot more thought! 
-                    #   and changes to the model, we don't need name/descr on
-                    #   elements, we just need to know which field is the
-                    #   display field
-                    if field_values:
-                        first_value = next(iter(field_values.items()))
-                        display_value = '%s: %s - %s' % (
-                            element_type.name.title(),
-                            first_value[0],
-                            first_value[1],
-                        )
-                        new_element.name=display_value
-                        new_element.save()
-                    row.update({'__%s_ID'%new_element.name:new_element.pk})
+                    # does one save per element
+                    with transaction.atomic():
+                        # create a new element
+                        new_element = Element(id=pk_id,
+                            element_type=element_type, project=self)
 
-        import pdb; pdb.set_trace()
+                        # create the new field values
+                        for value_type, value, descriptor in descriptor_values:
+                            field_value = value_type(
+                                value=value,
+                                element_field_descriptor=descriptor,
+                                element=new_element
+                            )
+
+                        # we need a display field
+                        # TODO: this display field issue needs a lot more thought! 
+                        #   and changes to the model, we don't need name/descr on
+                        #   elements, we just need to know which field is the
+                        #   display field
+                        if field_values:
+                            first_value = next(iter(field_values.items()))
+                            display_value = '%s: %s - %s' % (
+                                element_type.name.title(),
+                                first_value[0],
+                                first_value[1],
+                            )
+                            new_element.name=display_value
+                            new_element.save()
+                    #    row.update({'__%s_ID'%new_element.name:new_element.pk})
+
+                        # add value string to set
+                        unique_element_strings.add(value_string)
+
+                #row.update({'__%s__' % element_type.name : 
+                #    [pk_id, element_type, descriptor_values]})
+                row.update({'__%s__ID' % element_type.name : pk_id})
+
+        ## create the relationships to other elements
+        #with transaction.atomic():                                  
+        #    for row in rows:
+        #        for element_type in element_types:
+        #            pk_id = row.get('__%s__ID' % element_type.name)
+        #            for to_element_type in element_type.to_element_types:
+        #                fk_id = row.get('__%s__ID' % to_element_type.name)
+
+        #                if pk_id and fk_id:
+        #                    new_rel = Relationship(
+        #                        source_id=pk_id, target_id=fk_id) 
+        #                    new_rel.save()
+
+        ###########
+
+        # here's where it gets really crazy
+        with transaction.atomic():
+            for row in rows:
+                for element_type in element_types:
+                    pk_id = row.get('__%s__ID' % element_type.name)
+
+                    for rel_def in element_type.to_relationships:
+
+                        card = rel_def.card_abbr
+                        target = rel_def.target
+                        fk_id = row.get('__%s__ID' % target.name)
+
+                        if pk_id and fk_id:
+                            if card == 'ONE':
+                                new_rel, created = \
+                                    Relationship.objects.get_or_create(
+                                        source_id=pk_id, target_id=fk_id)
+
+
+                    ####### not working #########
+
+
+                                if not created:
+                                    # already exists, need to create a new
+                                    # element to point to
+                                    new_fk_id = uuid.uuid4()
+                                    row['__%s__ID' % target.name] = new_fk_id
+                                    fk_id = new_fk_id
+                                    new_rel = Relationship(
+                                        source_id=pk_id, target_id=fk_id)
+
+                            else:
+                                new_rel = Relationship(
+                                    source_id=pk_id, target_id=fk_id)
+
+                            new_rel.save()
 
 
 class ElementType(AbstractModel):
@@ -422,6 +491,26 @@ class ElementType(AbstractModel):
     # relationships = models.ManyToManyField('self',
     #     through='RelationshipDefinition', symmetrical=False, 
     #     related_name='related_to')
+
+    @property
+    def to_element_types(self):
+        return [x.target for x in self.forward_relationship_defs.filter(
+            rel_type_abbr__in=['PART','ISIN','ISOU'])]
+
+    @property
+    def from_element_types(self):
+        return [x.target for x in self.forward_relationship_defs.filter(
+            rel_type_abbr__in=['CONT','ORIG','HASI','HASO'])]
+
+    @property
+    def to_relationships(self):
+        return self.forward_relationship_defs.filter(
+            rel_type_abbr__in=['PART','ISIN','ISOU'])
+
+    @property
+    def from_relationships(self):
+        return self.forward_relationship_defs.filter(
+            rel_type_abbr__in=['CONT','ORIG','HASI','HASO'])
 
     class Meta:
         verbose_name = "element type"
@@ -612,8 +701,10 @@ class Element(AbstractModel):
 class Relationship(Base, models.Model):
     """Relates two elements"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    source = models.ForeignKey(Element, on_delete=models.CASCADE, related_name='source_object')
-    target = models.ForeignKey(Element, on_delete=models.CASCADE, related_name='target_object')
+    source = models.ForeignKey(Element, on_delete=models.CASCADE, 
+        related_name='forward_relationships')
+    target = models.ForeignKey(Element, on_delete=models.CASCADE, 
+        related_name='reverse_relationships')
 
     def __str__(self):
         return '%s - %s' % (
@@ -714,3 +805,4 @@ class ElementUrlFieldValue(AbstractElementFieldValue):
 # 
 #     class Meta:
 #         verbose_name = 'url'
+
