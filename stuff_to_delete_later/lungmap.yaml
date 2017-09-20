@@ -1,5 +1,7 @@
 name: specimen
 description: tissue from mouse
+element type: material entity
+diplay fields: SpecimenID, Sex, Age
 fields:
 - name: EmbeddingSource
 - name: Genotype
@@ -18,7 +20,7 @@ fields:
 - name: DissectionTime
 - name: SpecimenID
 rels:
-- type: origin
+- type: is origin of
   cardinality: zero one or many
   target: chunk   
 
@@ -26,6 +28,8 @@ rels:
 
 name: chunk   
 description: slice of lung tissue from specimen
+element type: material entity
+diplay fields: Set, Slide, Section
 fields: 
 - name: DirectionSection
 - name: SectionThickness
@@ -36,7 +40,7 @@ fields:
 - name: Slide   
 - name: Set 
 rels:
-- type: part
+- type: is part of
   cardinality: one
   target: specimen
 - type: is input to
@@ -47,6 +51,8 @@ rels:
 
 name: probe
 description: gene marker
+element type: material entity
+diplay fields: ProbeID, GeneSymbol
 fields: 
 - name: AccessionNumber
 - name: GeneSymbol
@@ -63,6 +69,8 @@ rels:
 
 name: process
 description: application of probe to chunk
+element type: process
+diplay fields: Protocol
 fields: 
 - name: Protocol
 rels:
@@ -80,6 +88,8 @@ rels:
 
 name: image
 description: image of chunk after application of probe
+diplay fields: FileName
+element type: data
 fields: 
 - name: URL
 - name: FileName
@@ -88,24 +98,3 @@ rels:
 - type: is output of
   cardinality: one
   target: process
- 
-# ---
-# 
-# name: dataset
-# description: grouping of images
-# fields:
-# - name: name
-# - name: description
-# - name: query
-# 
-# ---
-# 
-# name: dataset membership
-# description: links images to datasets
-# rels:
-# - type: parent
-#   character: is contained by
-#   target: dataset
-# - type: parent
-#   character: contains
-#   target: image 
