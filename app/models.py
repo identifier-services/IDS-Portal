@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models
+from django.db import models, transaction
 from django.urls import reverse
 
 import uuid
@@ -138,11 +138,73 @@ class AbstractModel(Base, models.Model):
         abstract = True
 
 
+class Node(object):
+    def __init__(self):
+        self.name = ''
+        self.left = []
+        self.right = []
+        self.obj = None
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return 'graph node: %s, |left| = %s, |right| = %s' % (
+            self.name, str(len(self.left)), str(len(self.right)))
+
+
 class InvestigationType(AbstractModel):
     """Model describing the types of projects that may be instantiated."""
 
     definition_file = models.FileField('definition file(s)', upload_to='documents/%Y/%m/%d/', 
         blank=True, null=True)
+
+    def _build_graph(self, root):
+        fk_type_rels = ['PART','ISIN','ISOU']
+        temp_list = root.right
+        for node in temp_list:
+            for parent_rel in node.obj.forward_relationship_defs.filter(
+                rel_type_abbr__in=fk_type_rels):
+                parent = parent_rel.target
+                parent_node = next(iter(
+                    filter(lambda a,b=parent: a.obj==b, temp_list)))
+                if not parent_node:
+                    continue
+                if parent_node not in node.left:
+                    node.left.append(parent_node)
+                if node not in parent_node.right:
+                    parent_node.right.append(node)
+                if node in root.right:
+                    root.right.remove(node)
+                if root in node.left:
+                    node.left.remove(root)
+
+    @property
+    def graph(self):
+        root = Node()
+        root.name = 'Investigation Type: %s' % self.name
+        root.obj = self
+
+        for element_type in ElementType.objects.filter(investigation_type=self):
+            n = Node()
+            n.name = element_type.name
+            n.left.append(root)
+            root.right.append(n)
+            n.obj = element_type
+
+        self._build_graph(root)
+
+        return root
+
+    # def _build_dep_list(self, node):
+    #     print node
+    #     for child in node.right:
+    #         self._build_dep_list(child)
+
+    # @property
+    # def dependency_list(self):
+    #     return self._build_dep_list(self.graph)
+        
 
     def save(self, *args, **kwargs):
         super(InvestigationType, self).save(*args, **kwargs)
@@ -246,7 +308,7 @@ class Project(AbstractModel):
 
     # TODO: add fk to owner/creator (auth.user)
     # TODO: add many-to-many to collaborators
-
+        
     def save(self, *args, **kwargs):
         super(Project, self).save(*args, **kwargs)
 
@@ -284,14 +346,10 @@ class Project(AbstractModel):
         # - loop though each element type definition
         # - for each element type, loop through each row of csv
         # - for each row, loop through each (element type) field
-        # - get the field value from the csv and store in list of k,v pairs
-        # - use complete list of k,v pairs to create a new element
-        # - if this element is unique (not already in db) save  
-        #   - slightly more complicated than just checking if model instance is
-        #     unqiue, because you actually need to check all the value tables
-        #     that point to the element. a different idea, instead of querying
-        #     db, create a hashable record of the values and store in a set
-        # import pdb; pdb.set_trace()
+        # - get the field value from the csv and add to a dictionary
+        # - use complete list of k,v pairs to create a new element string
+        # - if element string found in set of unique values continue, else
+        # - save element to db and store string in unique set  
         for element_type in element_types:
 
             # get field defs for this element type
@@ -317,38 +375,42 @@ class Project(AbstractModel):
                 if value_string in unique_element_strings:
                     continue
                     
-                # create a new element
-                new_element = Element(id=uuid.uuid4(),
-                    element_type=element_type, project=self)
+                with transaction.atomic():
+                    # create a new element
+                    new_element = Element(id=uuid.uuid4(),
+                        element_type=element_type, project=self)
 
-                # run through all the field descriptors again to create
-                # th new values
-                for field_descriptor in field_descriptors:
-                    field_value = field_values[field_descriptor.label]
+                    # run through all the field descriptors again to create
+                    # the new values
+                    for field_descriptor in field_descriptors:
+                        field_value = field_values[field_descriptor.label]
 
-                    new_value = field_descriptor.value_type(
-                        value=field_value,
-                        element_field_descriptor=field_descriptor,
-                        element=new_element)
-                    new_value.save()
+                        new_value = field_descriptor.value_type(
+                            value=field_value,
+                            element_field_descriptor=field_descriptor,
+                            element=new_element)
+                        new_value.save()
 
-                # add value string to set
-                unique_element_strings.add(value_string)
+                    # add value string to set
+                    unique_element_strings.add(value_string)
 
-                # we need a display field
-                # TODO: this display field issue needs a lot more thought! 
-                #   and changes to the model, we don't need name/descr on
-                #   elements, we just need to know which field is the
-                #   display field
-                if field_values:
-                    first_value = next(iter(field_values.items()))
-                    display_value = '%s: %s - %s' % (
-                        element_type.name.title(),
-                        first_value[0],
-                        first_value[1],
-                    )
-                    new_element.name=display_value
-                    new_element.save()
+                    # we need a display field
+                    # TODO: this display field issue needs a lot more thought! 
+                    #   and changes to the model, we don't need name/descr on
+                    #   elements, we just need to know which field is the
+                    #   display field
+                    if field_values:
+                        first_value = next(iter(field_values.items()))
+                        display_value = '%s: %s - %s' % (
+                            element_type.name.title(),
+                            first_value[0],
+                            first_value[1],
+                        )
+                        new_element.name=display_value
+                        new_element.save()
+                    row.update({'__%s_ID'%new_element.name:new_element.pk})
+
+        import pdb; pdb.set_trace()
 
 
 class ElementType(AbstractModel):
@@ -356,6 +418,10 @@ class ElementType(AbstractModel):
     per investigation type."""
 
     investigation_type = models.ForeignKey(InvestigationType, on_delete=models.CASCADE) 
+
+    # relationships = models.ManyToManyField('self',
+    #     through='RelationshipDefinition', symmetrical=False, 
+    #     related_name='related_to')
 
     class Meta:
         verbose_name = "element type"
@@ -454,8 +520,10 @@ class ElementFieldDescriptor(Base, models.Model):
 class RelationshipDefinition(Base, models.Model):
     """Describes a the relationships that may exist between element types."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    source = models.ForeignKey(ElementType, on_delete=models.CASCADE, related_name='source_object')
-    target = models.ForeignKey(ElementType, on_delete=models.CASCADE, related_name='target_object')
+    source = models.ForeignKey(ElementType, on_delete=models.CASCADE, 
+        related_name='forward_relationship_defs')
+    target = models.ForeignKey(ElementType, on_delete=models.CASCADE, 
+        related_name='reverse_relationship_defs')
     
     ORIG = 'ORIG'
     PART = 'PART'
