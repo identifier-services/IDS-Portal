@@ -45,13 +45,13 @@ class BaseGenericDetailView(generic.DetailView):
     context_object_name = 'object'
 
     def get_context_data(self, **kwargs):
-        # TODO: get rid of set_trace()
-        # import pdb; pdb.set_trace()
-
         context = super(BaseGenericDetailView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
         context['verbose_name'] = verbose_name.title() 
         context['type_name'] = verbose_name.replace(' ', '_')
+
+        # import pdb; pdb.set_trace()
+
         return context
 
 
@@ -100,7 +100,7 @@ class BaseGenericUpdateView(generic.UpdateView):
 class BaseGenericDeleteView(generic.DeleteView):
     template_name = 'app/generic_delete.html'
     context_object_name = 'object'
-    success_url = reverse_lazy('app:index')
+    success_url = reverse_lazy('app:project_list')
 
     def get_context_data(self, **kwargs):
         context = super(BaseGenericDeleteView, self).get_context_data(**kwargs)
@@ -166,31 +166,6 @@ class ProjectListView(BaseGenericListView):
 
 class ProjectCreateView(BaseGenericCreateView):
     model = Project
-    # template_name = 'app/project_form.html'
-
-    # def post(self, request, *args, **kwargs):
-    #     if request.FILES['bulk_upload']:
-    #         bulk_upload = request.FILES['bulk_upload']
-    #         zf = ZipFile(bulk_upload)
-    #         for filename in zf.namelist():
-    #             data = zf.read(filename).split('\n')
-
-    #            reader = csv.DictReader(data, delimiter=str('\t'))
-
-    #             name = '_'.join(filename.split('.')[:-1])
-    #             fields = reader.fieldnames
-
-    #             elements = []
-
-    #             for row in reader:
-    #                 elements.append(row)
-
-    #             element_types.append({
-    #                 'name': name,
-    #                 'fields': fields,
-    #                 'elements': elements
-    #             })
-    #     return super(ProjectCreateView, self).post(request, *args, **kwargs)
 
 class ProjectDetailView(BaseGenericDetailView):
     model = Project
@@ -368,6 +343,8 @@ class ElementDetailView(generic.DetailView):
                 'action': action,
             })
         context['values'] = values
+
+        # import pdb; pdb.set_trace()
 
         return context
 
