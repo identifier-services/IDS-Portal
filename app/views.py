@@ -11,7 +11,7 @@ from zipfile import ZipFile
 import csv
 
 from .models import (InvestigationType, Project, ElementType,
-    RelationshipDefinition, ElementFieldDescriptor, Element,
+    RelationshipDefinition, ElementFieldDescriptor, Element, Dataset,
     ElementCharFieldValue, ElementTextFieldValue, ElementIntFieldValue,
     ElementFloatFieldValue, ElementDateFieldValue, ElementUrlFieldValue)
 
@@ -355,6 +355,39 @@ class ElementUpdateView(BaseGenericUpdateView):
 
 class ElementDeleteView(BaseGenericDeleteView):
     model = Element
+
+###########
+# Dataset #
+###########
+
+class DatasetListView(BaseGenericListView):
+    model = Dataset
+
+
+class DatasetCreateView(BaseGenericCreateView):
+    model = Dataset
+
+
+class DatasetDetailView(BaseGenericDetailView):
+    model = Dataset
+    template_name = 'app/dataset_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(DatasetDetailView, self).get_context_data(**kwargs)
+        verbose_name = self.model._meta.verbose_name
+        context['verbose_name'] = verbose_name.title() 
+        context['type_name'] = verbose_name.replace(' ', '_')
+
+        context_object = context['object']
+
+        return context
+
+class DatasetUpdateView(BaseGenericUpdateView):
+    model = Dataset
+
+
+class DatasetDeleteView(BaseGenericDeleteView):
+    model = Dataset
 
 ############################
 # Element Char Field Value #

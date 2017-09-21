@@ -465,13 +465,14 @@ class Project(AbstractModel):
 
                                     rels = Relationship.objects.filter(
                                         source_id=pk_id, 
-                                        target_id=fk_id
+                                        target_id=fk_id,
                                     )
 
                             # create new relationship
                             rel = Relationship(
                                 source_id=pk_id, 
-                                target_id=fk_id)
+                                target_id=fk_id,
+                                relationship_definition=rel_def)
                             rel.save()
 
 
@@ -766,22 +767,109 @@ class Element(AbstractModel):
 class Relationship(Base, models.Model):
     """Relates two elements"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     source = models.ForeignKey(Element, on_delete=models.CASCADE, 
         related_name='forward_relationships')
+
     target = models.ForeignKey(Element, on_delete=models.CASCADE, 
         related_name='reverse_relationships')
 
+    relationship_definition = models.ForeignKey(RelationshipDefinition, 
+        on_delete=models.CASCADE, related_name='definition')
+
     def __str__(self):
-        return '%s - %s' % (
-            self.source.name, 
-            self.target.name
-        )
+        return '%s - %s' % (self.source.name, self.target.name)
+
+
+class DatasetLink(Base, models.Model):
+    """Relates two elements"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    dataset = models.ForeignKey('Dataset', on_delete=models.CASCADE)
+    datum = models.ForeignKey(Element, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'Dataset %s contains %s' % (self.dataset.name, self.datum.name)
+
 
 class Dataset(AbstractModel):
     """Joins data elements in one grouping through value query"""
-    query = models.TextField(blank=True, null=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE) 
+
+    query = models.TextField(blank=True, null=True, 
+        help_text='element type.field name = value')
+
+    status = models.CharField(max_length=200, blank=True, null=True, default='') #editable=False
 
     def save(self, *args, **kwargs):
+        query_parts = self.query.replace('==','=').split('=')
+        if len(query_parts) != 2:
+            self.status = 'bad query'
+            super(Dataset, self).save(*args, **kwargs)
+            return
+
+        key, value = [x.rstrip().lstrip() for x in query_parts]
+        key_parts = key.split('.')
+        if len(key_parts) != 2:
+            self.status = 'bad query'
+            super(Dataset, self).save(*args, **kwargs)
+            return
+
+        element_type_name, field_name = [x.rstrip().lstrip() for x in key_parts]
+        descriptors = ElementFieldDescriptor.objects.filter(
+            element_type__name=element_type_name,
+            label=field_name
+        )
+
+        descriptor = next(iter(descriptors), None)
+        if not descriptor:
+            self.status = 'field not found'
+            super(Dataset, self).save(*args, **kwargs)
+            return
+
+        value_type = descriptor.value_type
+        values = value_type.objects.filter(
+            value=value, element__project=self.project)
+        if not values:
+            self.status = 'value not found.'
+            super(Dataset, self).save(*args, **kwargs)
+            return
+
+        element_queue = set([x.element for x in values])
+        visited = set()
+        self.status = '%s elements found' % len(element_queue)
+
+        data = set()
+
+        while element_queue:
+
+            element = element_queue.pop()
+            visited.add(element)
+
+            if element.element_type.element_category == 'D':
+                data.add(element)
+
+            elif element.element_type.element_category == 'P':
+                unvisited = set([x.target for x in \
+                    element.forward_relationships.filter(
+                        relationship_definition__rel_type_abbr__in=['HASO']) \
+                    if x not in visited and \
+                    x not in data])
+                element_queue.update(unvisited)
+            else:
+                unvisited = set([x.source for x in \
+                    element.reverse_relationships.filter(
+                        relationship_definition__rel_type_abbr__in=['HASI']) \
+                    if x not in visited and \
+                    x not in data])
+                element_queue.update(unvisited)
+
+        self.status = 'registered %s data elements' % len(data)
+        with transaction.atomic():
+            for datum in data:
+                rel = DatasetLink(dataset=self, datum=datum)
+                rel.save()
+
         super(Dataset, self).save(*args, **kwargs)
 
 

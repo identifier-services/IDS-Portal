@@ -177,6 +177,35 @@ urlpatterns = [
         views.ElementDeleteView.as_view(), 
         name='element_delete'),
 
+    ###########
+    # dataset #
+    ###########
+
+    # list
+    url(r'^datasets/$', 
+        views.DatasetListView.as_view(), 
+        name='dataset_list'),
+    
+    # create
+    url(r'^dataset/create/$', 
+        views.DatasetCreateView.as_view(), 
+        name='dataset_create'),
+    
+    # detail
+    url(r'^dataset/(?P<pk>[0-9a-f-]+)$', 
+        views.DatasetDetailView.as_view(), 
+        name='dataset_detail'),
+    
+    # update
+    url(r'^dataset/(?P<pk>[0-9a-f-]+)/update/$', 
+        views.DatasetUpdateView.as_view(), 
+        name='dataset_update'),
+    
+    # delete
+    url(r'^dataset/(?P<pk>[0-9a-f-]+)/delete/$', 
+        views.DatasetDeleteView.as_view(), 
+        name='dataset_delete'),
+
     ############################
     # element char field value #
     ############################
