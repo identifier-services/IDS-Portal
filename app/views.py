@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.core import paginator
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import generic
@@ -29,7 +30,6 @@ class BaseGenericListView(generic.ListView):
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
-
         logger.debug('request user: %s' % self.request.user)
         logger.debug('dir(request.user): %s' % dir(self.request.user))
 
@@ -44,12 +44,28 @@ class BaseGenericListView(generic.ListView):
 class BaseGenericDetailView(generic.DetailView):
     template_name = 'app/generic_detail.html'
     context_object_name = 'object'
+    paginate_by = 25
 
     def get_context_data(self, **kwargs):
         context = super(BaseGenericDetailView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
         context['verbose_name'] = verbose_name.title()
         context['type_name'] = verbose_name.replace(' ', '_')
+
+        context_object = context['object']
+        child_rels_group = context_object.get_child_relations()
+
+        page = self.request.GET.get('page')
+
+        paginators = []
+        for child_rel_group in child_rels_group:
+            pag = paginator.Paginator(child_rel_group['objects'], self.paginate_by)
+            try:
+                paginators.append(pag.page(page))
+            except:
+                paginators.append(pag.page(1))
+        
+        context['page_objs'] = paginators
 
         return context
 
