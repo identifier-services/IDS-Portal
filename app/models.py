@@ -219,13 +219,25 @@ class InvestigationType(AbstractModel):
 
         for definition in definitions:
             name = definition.get('name', '')
+
             description = definition.get('description', '')
+            
+            element_category = definition.get('element category', '') or \
+                definition.get('category', '') or \
+                definition.get('element type', '') or \
+                definition.get('type', '')
+
+            display_fields = definition.get('display fields', '') or \
+                definition.get('display field', '')
+
             fields = definition.get('fields', [])
         
             elem_type = ElementType(
                 name=name, 
                 description=description,
-                investigation_type=self
+                investigation_type=self,
+                element_category=element_category,
+                display_fields=display_fields
             )
 
             elem_type.save()
@@ -379,15 +391,7 @@ class Project(AbstractModel):
                 value_string = str(field_values)
 
                 # check for uniqueness
-                if value_string in unique_element_strings:
-
-                    # this is really hacky, but when we run through
-                    # the rows again, if we see that descriptor values
-                    # is None, we know we don't have to create this
-                    # element, it's id is only there for reference.
-                    descriptor_values = None
-
-                else:
+                if not value_string in unique_element_strings:
 
                     # if new element, create a new unique id
                     pk_id = uuid.uuid4()
@@ -397,6 +401,7 @@ class Project(AbstractModel):
                         # create a new element
                         new_element = Element(id=pk_id,
                             element_type=element_type, project=self)
+                        new_element.save()
 
                         # create the new field values
                         for value_type, value, descriptor in descriptor_values:
@@ -405,21 +410,7 @@ class Project(AbstractModel):
                                 element_field_descriptor=descriptor,
                                 element=new_element
                             )
-
-                        # we need a display field
-                        # TODO: this display field issue needs a lot more thought! 
-                        #   and changes to the model, we don't need name/descr on
-                        #   elements, we just need to know which field is the
-                        #   display field
-                        if field_values:
-                            first_value = next(iter(field_values.items()))
-                            display_value = '%s: %s - %s' % (
-                                element_type.name.title(),
-                                first_value[0],
-                                first_value[1],
-                            )
-                            new_element.name=display_value
-                            new_element.save()
+                            field_value.save()
 
                         # add value string to set
                         unique_element_strings.add(value_string)
@@ -490,19 +481,41 @@ class ElementType(AbstractModel):
 
     investigation_type = models.ForeignKey(InvestigationType, on_delete=models.CASCADE) 
 
-    # relationships = models.ManyToManyField('self',
-    #     through='RelationshipDefinition', symmetrical=False, 
-    #     related_name='related_to')
+    MAT = 'M'
+    DAT = 'D'
+    PRO = 'P'
+
+    ELEMENT_CATEGORIES = (
+        (MAT, 'material'),
+        (DAT, 'data'),
+        (PRO, 'process'),
+    )
+
+    element_category = models.CharField(
+        'element category',
+        max_length = 1,
+        choices = ELEMENT_CATEGORIES,
+        default=MAT,
+        help_text="Which category is this element type? Material, data, or process?"
+    )
+
+    display_fields = models.CharField(max_length=200, 
+        help_text="List the fields that should be used to label elements of this type in a list", blank=True)
 
     @property
-    def to_element_types(self):
-        return [x.target for x in self.forward_relationship_defs.filter(
-            rel_type_abbr__in=['PART','ISIN','ISOU'])]
+    def verbose_element_category(self):
+        try:
+            return filter(lambda x, y=self.element_category: x[0]==y, 
+                self.ELEMENT_CATEGORIES)[0][1]
+        except Exception as e:
+            logger.debug(e)
+
+        # falls through to here if not found
+        return self.element_category
 
     @property
-    def from_element_types(self):
-        return [x.target for x in self.forward_relationship_defs.filter(
-            rel_type_abbr__in=['CONT','ORIG','HASI','HASO'])]
+    def display_field_list(self):
+        return self.display_fields.split(',')
 
     @property
     def to_relationships(self):
@@ -513,6 +526,21 @@ class ElementType(AbstractModel):
     def from_relationships(self):
         return self.forward_relationship_defs.filter(
             rel_type_abbr__in=['CONT','ORIG','HASI','HASO'])
+
+    def save(self, *args, **kwargs):
+        self.display_fields = ','.join(filter(lambda x: x is not '', 
+            [x.rstrip().lstrip() for x in self.display_fields.split(',')]))
+
+        if self.element_category:
+            first_letter = self.element_category[0]
+            if first_letter.lower() == 'd':
+                self.element_category = self.DAT
+            elif first_letter.lower() == 'p':
+                self.element_category = self.PRO
+            else:
+                self.element_category = self.MAT
+
+        super(ElementType, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = "element type"
@@ -641,7 +669,6 @@ class RelationshipDefinition(Base, models.Model):
         default=PART,
     )
 
-    ZERO = 'ZERO'
     ONE = 'ONE'
     ZO = 'ZO'
     MANY = 'MANY'
@@ -649,7 +676,6 @@ class RelationshipDefinition(Base, models.Model):
     ZOM = 'ZOM'
 
     CARDINALITIES = (
-        (ZERO, 'zero'),
         (ONE, 'one'),
         (ZO, 'zero or one'),
         (MANY, 'many'),
@@ -699,6 +725,43 @@ class Element(AbstractModel):
     element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
     project = models.ForeignKey(Project, on_delete=models.CASCADE) 
 
+    @property
+    def element_category(self):
+        return self.element_type.element_category
+
+    def _set_display_name(self):
+        display_items = []
+        display_fields = self.element_type.display_field_list
+        with transaction.atomic():
+            for display_field in display_fields:
+                descriptors = self.element_type.elementfielddescriptor_set.filter(
+                    label=display_field)
+                descriptor = next(iter(descriptors), None)
+                if descriptor:
+                    value_type = descriptor.value_type
+                    if value_type:
+                        field_values = value_type.objects.filter(element=self, 
+                            element_field_descriptor=descriptor)
+                        field_value = next(iter(field_values), None)
+                        if field_value:
+                            display_items.append('%s: %s' % (descriptor.label,
+                                field_value.value))
+            self.name = '%s: %s' % (self.element_type.name.title(),
+                ','.join(display_items))
+            self.save()
+
+    def save(self, *args, **kwargs):
+        super(Element, self).save(*args, **kwargs)
+
+        if self.element_category == ElementType.DAT:
+            #TODO trigger checksum app
+            pass
+
+    def __str__(self):
+        if self.name == '':
+            self._set_display_name()
+        return self.name
+
 
 class Relationship(Base, models.Model):
     """Relates two elements"""
@@ -713,6 +776,13 @@ class Relationship(Base, models.Model):
             self.source.name, 
             self.target.name
         )
+
+class Dataset(AbstractModel):
+    """Joins data elements in one grouping through value query"""
+    query = models.TextField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        super(Dataset, self).save(*args, **kwargs)
 
 
 class AbstractElementFieldValue(Base, models.Model):
@@ -731,6 +801,12 @@ class AbstractElementFieldValue(Base, models.Model):
     ##########
     # Methods
     ##########
+
+    def save(self, *args, **kwargs):
+        super(AbstractElementFieldValue, self).save(*args, **kwargs)
+        field_name = self.element_field_descriptor.label
+        if field_name in self.element.element_type.display_field_list:
+            self.element._set_display_name()
 
     def __str__(self):
         return str(self.value)

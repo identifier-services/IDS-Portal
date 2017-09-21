@@ -1,7 +1,7 @@
 name: specimen
 description: tissue from mouse
-element type: material entity
-diplay fields: SpecimenID, Sex, Age
+element category: material entity
+display fields: SpecimenID, Sex, Age
 fields:
 - name: EmbeddingSource
 - name: Genotype
@@ -28,8 +28,8 @@ rels:
 
 name: chunk   
 description: slice of lung tissue from specimen
-element type: material entity
-diplay fields: Set, Slide, Section
+element category: material entity
+display fields: Set, Slide, Section
 fields: 
 - name: DirectionSection
 - name: SectionThickness
@@ -51,8 +51,8 @@ rels:
 
 name: probe
 description: gene marker
-element type: material entity
-diplay fields: ProbeID, GeneSymbol
+element category: material entity
+display fields: ProbeID, GeneSymbol
 fields: 
 - name: AccessionNumber
 - name: GeneSymbol
@@ -69,8 +69,8 @@ rels:
 
 name: process
 description: application of probe to chunk
-element type: process
-diplay fields: Protocol
+element category: process
+display fields: Protocol
 fields: 
 - name: Protocol
 rels:
@@ -88,8 +88,8 @@ rels:
 
 name: image
 description: image of chunk after application of probe
-diplay fields: FileName
-element type: data
+display fields: FileName
+element category: data
 fields: 
 - name: URL
 - name: FileName

@@ -21,10 +21,15 @@
     <h3>Attributes:</h3>
     <ul>
         {% for field in object.get_fields %}
+
             {% if field.url %}
                 <li><b>{{ field.label }}:</b> {{ field.url }}</li>
             {% else %}
-                <li><b>{{ field.label }}:</b> {{ field.value }}</li>
+                {% if field.label == 'element category' %}
+                    <li><b>{{ field.label }}:</b> {{ object.verbose_element_category }}</li>
+                {% else %}
+                    <li><b>{{ field.label }}:</b> {{ field.value }}</li>
+                {% endif %}
             {% endif %}
         {% endfor %}
     </ul>

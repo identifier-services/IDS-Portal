@@ -51,8 +51,6 @@ class BaseGenericDetailView(generic.DetailView):
         context['verbose_name'] = verbose_name.title()
         context['type_name'] = verbose_name.replace(' ', '_')
 
-        # import pdb; pdb.set_trace()
-
         return context
 
 
