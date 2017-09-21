@@ -799,7 +799,8 @@ class Dataset(AbstractModel):
     query = models.TextField(blank=True, null=True, 
         help_text='element type.field name = value')
 
-    status = models.CharField(max_length=200, blank=True, null=True, default='') #editable=False
+    status = models.CharField(max_length=200, blank=True, null=True,
+        default='', editable=False)
 
     def save(self, *args, **kwargs):
         query_parts = self.query.replace('==','=').split('=')
@@ -867,8 +868,9 @@ class Dataset(AbstractModel):
         self.status = 'registered %s data elements' % len(data)
         with transaction.atomic():
             for datum in data:
-                rel = DatasetLink(dataset=self, datum=datum)
-                rel.save()
+                if not DatasetLink.objects.filter(dataset=self, datum=datum):
+                    rel = DatasetLink(dataset=self, datum=datum)
+                    rel.save()
 
         super(Dataset, self).save(*args, **kwargs)
 
