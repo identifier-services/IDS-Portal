@@ -445,41 +445,59 @@ class Project(AbstractModel):
         ###########
 
         # here's where it gets really crazy
+
+        # do all the commits together
         with transaction.atomic():
+
+            # loop through each row from csv file (now containing uuids)
             for row in rows:
+
+                # loop through all our element types
                 for element_type in element_types:
+
+                    # get uuid for element_type's element in this row
                     pk_id = row.get('__%s__ID' % element_type.name)
 
-                    for rel_def in element_type.to_relationships:
+                    # loop through 'has input', 'has output', etc. type rels
+                    for rel_def in element_type.from_relationships:
 
                         card = rel_def.card_abbr
                         target = rel_def.target
                         fk_id = row.get('__%s__ID' % target.name)
 
                         if pk_id and fk_id:
-                            if card == 'ONE':
-                                new_rel, created = \
-                                    Relationship.objects.get_or_create(
-                                        source_id=pk_id, target_id=fk_id)
+                            if card in ['ONE','ZO']:
 
+                                # any existing rels between these elements?
+                                rels = Relationship.objects.filter(
+                                    source_id=pk_id, 
+                                    target_id=fk_id
+                                )
 
-                    ####### not working #########
+                                # if relationship already exists...
+                                if rels:
 
+                                    # create a duplicate element to point to
+                                    element = Element.objects.get(pk=pk_id)
+                                    element.id = None
+                                    element.save()
 
-                                if not created:
-                                    # already exists, need to create a new
-                                    # element to point to
-                                    new_fk_id = uuid.uuid4()
-                                    row['__%s__ID' % target.name] = new_fk_id
-                                    fk_id = new_fk_id
-                                    new_rel = Relationship(
-                                        source_id=pk_id, target_id=fk_id)
+                                    # update the element_type's element id in
+                                    # the row
 
-                            else:
-                                new_rel = Relationship(
-                                    source_id=pk_id, target_id=fk_id)
+                                    pk_id = element.id
+                                    row['__%s__ID' % element_type.name] = pk_id
 
-                            new_rel.save()
+                                    rels = Relationship.objects.filter(
+                                        source_id=pk_id, 
+                                        target_id=fk_id
+                                    )
+
+                            # create new relationship
+                            rel = Relationship(
+                                source_id=pk_id, 
+                                target_id=fk_id)
+                            rel.save()
 
 
 class ElementType(AbstractModel):
