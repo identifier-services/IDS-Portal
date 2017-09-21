@@ -420,7 +420,6 @@ class Project(AbstractModel):
                             )
                             new_element.name=display_value
                             new_element.save()
-                    #    row.update({'__%s_ID'%new_element.name:new_element.pk})
 
                         # add value string to set
                         unique_element_strings.add(value_string)
@@ -429,22 +428,7 @@ class Project(AbstractModel):
                 #    [pk_id, element_type, descriptor_values]})
                 row.update({'__%s__ID' % element_type.name : pk_id})
 
-        ## create the relationships to other elements
-        #with transaction.atomic():                                  
-        #    for row in rows:
-        #        for element_type in element_types:
-        #            pk_id = row.get('__%s__ID' % element_type.name)
-        #            for to_element_type in element_type.to_element_types:
-        #                fk_id = row.get('__%s__ID' % to_element_type.name)
-
-        #                if pk_id and fk_id:
-        #                    new_rel = Relationship(
-        #                        source_id=pk_id, target_id=fk_id) 
-        #                    new_rel.save()
-
-        ###########
-
-        # here's where it gets really crazy
+        ## add relationships ##
 
         # do all the commits together
         with transaction.atomic():
@@ -462,8 +446,8 @@ class Project(AbstractModel):
                     for rel_def in element_type.from_relationships:
 
                         card = rel_def.card_abbr
-                        target = rel_def.target
-                        fk_id = row.get('__%s__ID' % target.name)
+                        target_type = rel_def.target
+                        fk_id = row.get('__%s__ID' % target_type.name)
 
                         if pk_id and fk_id:
                             if card in ['ONE','ZO']:
@@ -471,7 +455,7 @@ class Project(AbstractModel):
                                 # any existing rels between these elements?
                                 rels = Relationship.objects.filter(
                                     source_id=pk_id, 
-                                    target_id=fk_id
+                                    target__element_type=target_type
                                 )
 
                                 # if relationship already exists...
