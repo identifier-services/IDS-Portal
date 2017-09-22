@@ -52,20 +52,20 @@ class BaseGenericDetailView(generic.DetailView):
         context['verbose_name'] = verbose_name.title()
         context['type_name'] = verbose_name.replace(' ', '_')
 
-        context_object = context['object']
-        child_rels_group = context_object.get_child_relations()
+        #context_object = context['object']
+        #child_rels_group = context_object.get_child_relations()
 
-        page = self.request.GET.get('page')
+        #page = self.request.GET.get('page')
 
-        paginators = []
-        for child_rel_group in child_rels_group:
-            pag = paginator.Paginator(child_rel_group['objects'], self.paginate_by)
-            try:
-                paginators.append(pag.page(page))
-            except:
-                paginators.append(pag.page(1))
+        #paginators = []
+        #for child_rel_group in child_rels_group:
+        #    pag = paginator.Paginator(child_rel_group['objects'], self.paginate_by)
+        #    try:
+        #        paginators.append(pag.page(page))
+        #    except:
+        #        paginators.append(pag.page(1))
         
-        context['page_objs'] = paginators
+        #context['page_objs'] = paginators
 
         return context
 
