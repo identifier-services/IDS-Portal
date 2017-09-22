@@ -803,60 +803,86 @@ class Dataset(AbstractModel):
         default='', editable=False)
 
     def save(self, *args, **kwargs):
+        #TODO: split at AND OR and consider NOT
+
+        # replace double equals and split on equal to get the 
+        # key ([element type].[field name]), and the value to search
         query_parts = self.query.replace('==','=').split('=')
         if len(query_parts) != 2:
             self.status = 'bad query'
             super(Dataset, self).save(*args, **kwargs)
             return
-
         key, value = [x.rstrip().lstrip() for x in query_parts]
+
+        # strip white space off the ends and split at the dots
+        # to get the element type and field name to search
         key_parts = key.split('.')
         if len(key_parts) != 2:
             self.status = 'bad query'
             super(Dataset, self).save(*args, **kwargs)
-            return
+            return 
+        element_type_name, field_name = \
+            [x.rstrip().lstrip() for x in key_parts]
 
-        element_type_name, field_name = [x.rstrip().lstrip() for x in key_parts]
+        # get the descriptor for this field on this element_type
+        # (we're going to take the first one because why would you have
+        # the same field twice on one element? you might though so that's
+        # why i'm using filter rather than get)
         descriptors = ElementFieldDescriptor.objects.filter(
             element_type__name=element_type_name,
             label=field_name
         )
-
         descriptor = next(iter(descriptors), None)
         if not descriptor:
-            self.status = 'field not found'
+            self.status = 'element or field not found'
             super(Dataset, self).save(*args, **kwargs)
             return
 
+        # daniel bolling and stewart
+
+        # query this project's value_types (e.g. ElementCharFieldValue)
+        # for the given value
         value_type = descriptor.value_type
-        values = value_type.objects.filter(
-            value=value, element__project=self.project)
+        values = value_type.objects.filter(value=value, 
+            element_field_descriptor=descriptor, element__project=self.project)
         if not values:
             self.status = 'value not found.'
             super(Dataset, self).save(*args, **kwargs)
             return
 
+        # grab the elements from the queried field values
+        # put the elements in a queue (a set, we want only unique elements)
         element_queue = set([x.element for x in values])
         visited = set()
         self.status = '%s elements found' % len(element_queue)
 
         data = set()
 
+        # while the queue is not empty
         while element_queue:
 
+            # pop an element off
             element = element_queue.pop()
+            # and add it to the set of element which we've already seen
             visited.add(element)
 
+            # if the element is a data type, add to our list of data
             if element.element_type.element_category == 'D':
                 data.add(element)
 
+            # else if it is a process type, add it's output to the queue
             elif element.element_type.element_category == 'P':
                 unvisited = set([x.target for x in \
                     element.forward_relationships.filter(
-                        relationship_definition__rel_type_abbr__in=['HASO']) \
+                        relationship_definition__rel_type_abbr__in=\
+                        ['HASO']) \
                     if x not in visited and \
                     x not in data])
                 element_queue.update(unvisited)
+
+            # else if it is a material entity, find elements to which
+            # it is input, or elements that originated from it, and
+            # add them to the queue
             else:
                 unvisited = set([x.source for x in \
                     element.reverse_relationships.filter(
@@ -865,13 +891,26 @@ class Dataset(AbstractModel):
                     x not in data])
                 element_queue.update(unvisited)
 
+                unvisited = set([x.target for x in \
+                    element.forward_relationships.filter(
+                        relationship_definition__rel_type_abbr__in=\
+                        ['CONT','ORIG']) \
+                    if x not in visited and \
+                    x not in data])
+                element_queue.update(unvisited)
+
+        # this is not super fancy, little status message with the number
+        # of data elements we found
         self.status = 'registered %s data elements' % len(data)
+
+        # save the links
         with transaction.atomic():
             for datum in data:
                 if not DatasetLink.objects.filter(dataset=self, datum=datum):
                     rel = DatasetLink(dataset=self, datum=datum)
                     rel.save()
 
+        # save the dataset
         super(Dataset, self).save(*args, **kwargs)
 
 
