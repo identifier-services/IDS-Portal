@@ -108,7 +108,7 @@ def token_list__(token_string, symbols):
     return tokens
 
 def token_list(token_string, symbols):
-    left = [token_string]
+    left = token_string
     right = []
     for symbol in symbols:
         print
@@ -116,14 +116,19 @@ def token_list(token_string, symbols):
         if not left:
             break
         if isinstance(next(iter(left),None), list):
+            right.extend([x[-1] for x in left if len(x) > 1])
             left = [x[0].split(symbol) for x in left]
-        else:
+        elif isinstance(left, list):
             left = [x.split(symbol) for x in left]
+        else:
+            left = left.split(symbol)
     while True:
+        if len(left) > 1:
+            right.extend(left[1])
         left = left[0]
         if not isinstance(left, list):
             break
-    return left
+    return left, right
 
 print '==========='
 

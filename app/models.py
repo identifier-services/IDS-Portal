@@ -178,6 +178,19 @@ class InvestigationType(AbstractModel):
                     root.right.remove(node)
                 if root in node.left:
                     node.left.remove(root)
+    @property
+    def bs_nested_list(self):
+        y = ['Lungmap',
+                ['My lungmap project',
+                    ['specimen',
+                        ['chunk',
+                            ['process']],
+                    'probe',
+                        ['process'],
+                    'process', 
+                        ['image',
+                            ['dataset']]]]]
+        return y
 
     @property
     def graph(self):
