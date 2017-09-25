@@ -3,6 +3,8 @@
 {% block content %}
     <h2>{{ verbose_name }} Detail</h2>
 
+    {{ object }}
+
     {% if object.get_parent_relations %}
         <hr/>
         <h3>From:</h3>
@@ -28,7 +30,12 @@
                 {% if field.label == 'element category' %}
                     <li><b>{{ field.label }}:</b> {{ object.verbose_element_category }}</li>
                 {% else %}
-                    <li><b>{{ field.label }}:</b> {{ field.value }}</li>
+                    <li><b>{{ field.label }}:</b> 
+                    {% if field.value.url %}
+                        <a href="{{ field.value.url }}">{{ field.value }}</a></li>
+                    {% else %}
+                        {{ field.value }}</li>
+                    {% endif %}
                 {% endif %}
             {% endif %}
         {% endfor %}
