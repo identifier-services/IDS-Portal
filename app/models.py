@@ -820,25 +820,16 @@ class Dataset(AbstractModel):
         # with characters that makes it easier to split off the boolean
         # and equlity operators
         query = self.query\
-            # make uniform equality operators uniform
             .replace('==','=').replace('!=','#').replace('<>','#')\
             .replace(' = ','=').replace(' # ','#')\
-            .erplace(' IN ','^').replace(' in ','^')\
-            # get rid of any parenthesis the user might have included
+            .replace(' IN ','^').replace(' in ','^')\
             .replace('(','').replace(')','')\
-            # then surround boolean operators in parenthesis
             .replace('=','(=)').replace('#','(#)')\
-            # make boolean operators uniform
             .replace('&&','AND').replace('||','OR')\
             .replace('&','AND').replace('|','OR')\
             .replace(' and ', ' AND ').replace(' or ', ' OR ')\
-            # remove any < or > characters the user may have included
             .replace('<','').replace('>','')\
-            # then user <> to surround boolean operators
             .replace(' AND ', '<AND>').replace(' OR ', '<OR>')\
-            # strip whitespace around commas and periods
-            # .replace(', ',',').replace(' ,',',')\
-            # .replace('. ','.'.replace(' .','.'))
 
         # symbols that we will use to split the string
         symbols = ['>','<',')','(','.']
@@ -862,17 +853,21 @@ class Dataset(AbstractModel):
         operators = []
 
         # create lists of terms and boolean operators
+
         while len(query_parts) >= 4:
-            terms.append(Term(*parts[:4]))
-            parts = parts[4:]
-            if parts:
-                operators.append(parts[0])
-                parts = parts[:1]
+            print "&& %s &&" % query_parts
+            terms.append(Term(*query_parts[:4]))
+            query_parts = query_parts[4:]
+            if query_parts:
+                print "-=-=-= %s -=-=-=-" % operators
+                operators.append(query_parts[0])
+                query_parts = query_parts[1:]
 
         bag = []
         for term in terms:
-            element_type = term.table
-            label = term.field
+            element_type_name = term.table
+            field_name = term.field
+            value = term.value
 
             # get the descriptor for this field on this element_type
             # (we're going to take the first one because why would you have
@@ -949,19 +944,19 @@ class Dataset(AbstractModel):
                         x not in data])
                     element_queue.update(unvisited)
 
-            bag.append(data)
-
-        print "!+!+!+! %s +!+!+!+!" % str(bag)
+                bag.append(data)
 
         ds = set(bag.pop())
 
-        for operator in operators:
-            if operator = 'AND':
-                ds = ds.intersection(bag.pop())
-            elif opertor = 'OR':
-                ds = ds.union(bag.pop())
+        print 'len(ds): %s' % len(ds)
 
-        print "!+!+!+! %s +!+!+!+!" % str(ds)
+        for operator in operators:
+            print operator
+            print 'len(ds): %s' % len(ds)
+            if operator == 'AND':
+                ds = ds.intersection(bag.pop())
+            elif operator == 'OR':
+                ds = ds.union(bag.pop())
 
         # this is not super fancy, little status message with the number
         # of data elements we found
