@@ -816,109 +816,160 @@ class Dataset(AbstractModel):
         default='', editable=False)
 
     def save(self, *args, **kwargs):
-        #TODO: split at AND OR and consider NOT
+        # make query string uniform and replace space with white space
+        # with characters that makes it easier to split off the boolean
+        # and equlity operators
+        query = self.query\
+            # make uniform equality operators uniform
+            .replace('==','=').replace('!=','#').replace('<>','#')\
+            .replace(' = ','=').replace(' # ','#')\
+            .erplace(' IN ','^').replace(' in ','^')\
+            # get rid of any parenthesis the user might have included
+            .replace('(','').replace(')','')\
+            # then surround boolean operators in parenthesis
+            .replace('=','(=)').replace('#','(#)')\
+            # make boolean operators uniform
+            .replace('&&','AND').replace('||','OR')\
+            .replace('&','AND').replace('|','OR')\
+            .replace(' and ', ' AND ').replace(' or ', ' OR ')\
+            # remove any < or > characters the user may have included
+            .replace('<','').replace('>','')\
+            # then user <> to surround boolean operators
+            .replace(' AND ', '<AND>').replace(' OR ', '<OR>')\
+            # strip whitespace around commas and periods
+            # .replace(', ',',').replace(' ,',',')\
+            # .replace('. ','.'.replace(' .','.'))
 
-        # replace double equals and split on equal to get the 
-        # key ([element type].[field name]), and the value to search
-        query_parts = self.query.replace('==','=').split('=')
-        if len(query_parts) != 2:
-            self.status = 'bad query'
-            super(Dataset, self).save(*args, **kwargs)
-            return
-        key, value = [x.rstrip().lstrip() for x in query_parts]
+        # symbols that we will use to split the string
+        symbols = ['>','<',')','(','.']
 
-        # strip white space off the ends and split at the dots
-        # to get the element type and field name to search
-        key_parts = key.split('.')
-        if len(key_parts) != 2:
-            self.status = 'bad query'
-            super(Dataset, self).save(*args, **kwargs)
-            return 
-        element_type_name, field_name = \
-            [x.rstrip().lstrip() for x in key_parts]
+        # split query into all the parts
+        query_parts = [query]
+        for symbol in symbols:
+            temp_parts = []
+            for part in query_parts:
+                temp_parts.extend(part.split(symbol))
+            query_parts = temp_parts
 
-        # get the descriptor for this field on this element_type
-        # (we're going to take the first one because why would you have
-        # the same field twice on one element? you might though so that's
-        # why i'm using filter rather than get)
-        descriptors = ElementFieldDescriptor.objects.filter(
-            element_type__name=element_type_name,
-            label=field_name
-        )
-        descriptor = next(iter(descriptors), None)
-        if not descriptor:
-            self.status = 'element or field not found'
-            super(Dataset, self).save(*args, **kwargs)
-            return
+        # get rid of any extra whitespace
+        query_parts = map(lambda x: x.rstrip().lstrip(), query_parts)
 
-        # daniel bolling and stewart
+        # we'll used a named tuple to store the parts for each selection
+        from collections import namedtuple
+        Term = namedtuple('Term', ['table','field','operator','value'])
+        
+        terms = []
+        operators = []
 
-        # query this project's value_types (e.g. ElementCharFieldValue)
-        # for the given value
-        value_type = descriptor.value_type
-        values = value_type.objects.filter(value=value, 
-            element_field_descriptor=descriptor, element__project=self.project)
-        if not values:
-            self.status = 'value not found.'
-            super(Dataset, self).save(*args, **kwargs)
-            return
+        # create lists of terms and boolean operators
+        while len(query_parts) >= 4:
+            terms.append(Term(*parts[:4]))
+            parts = parts[4:]
+            if parts:
+                operators.append(parts[0])
+                parts = parts[:1]
 
-        # grab the elements from the queried field values
-        # put the elements in a queue (a set, we want only unique elements)
-        element_queue = set([x.element for x in values])
-        visited = set()
-        self.status = '%s elements found' % len(element_queue)
+        bag = []
+        for term in terms:
+            element_type = term.table
+            label = term.field
 
-        data = set()
+            # get the descriptor for this field on this element_type
+            # (we're going to take the first one because why would you have
+            # the same field twice on one element? you might though so that's
+            # why i'm using filter rather than get)
+            descriptors = ElementFieldDescriptor.objects.filter(
+                element_type__name=element_type_name,
+                label=field_name
+            )
+            descriptor = next(iter(descriptors), None)
+            if not descriptor:
+                self.status = 'element or field not found'
+                super(Dataset, self).save(*args, **kwargs)
+                return
 
-        # while the queue is not empty
-        while element_queue:
+            # daniel bolling and stewart
 
-            # pop an element off
-            element = element_queue.pop()
-            # and add it to the set of element which we've already seen
-            visited.add(element)
+            # query this project's value_types (e.g. ElementCharFieldValue)
+            # for the given value
+            value_type = descriptor.value_type
+            values = value_type.objects.filter(value=value, 
+                element_field_descriptor=descriptor, element__project=self.project)
+            if not values:
+                self.status = 'value not found.'
+                super(Dataset, self).save(*args, **kwargs)
+                return
 
-            # if the element is a data type, add to our list of data
-            if element.element_type.element_category == 'D':
-                data.add(element)
+            # grab the elements from the queried field values
+            # put the elements in a queue (a set, we want only unique elements)
+            element_queue = set([x.element for x in values])
+            visited = set()
+            self.status = '%s elements found' % len(element_queue)
 
-            # else if it is a process type, add it's output to the queue
-            elif element.element_type.element_category == 'P':
-                unvisited = set([x.target for x in \
-                    element.forward_relationships.filter(
-                        relationship_definition__rel_type_abbr__in=\
-                        ['HASO']) \
-                    if x not in visited and \
-                    x not in data])
-                element_queue.update(unvisited)
+            data = set()
 
-            # else if it is a material entity, find elements to which
-            # it is input, or elements that originated from it, and
-            # add them to the queue
-            else:
-                unvisited = set([x.source for x in \
-                    element.reverse_relationships.filter(
-                        relationship_definition__rel_type_abbr__in=['HASI']) \
-                    if x not in visited and \
-                    x not in data])
-                element_queue.update(unvisited)
+            # while the queue is not empty
+            while element_queue:
 
-                unvisited = set([x.target for x in \
-                    element.forward_relationships.filter(
-                        relationship_definition__rel_type_abbr__in=\
-                        ['CONT','ORIG']) \
-                    if x not in visited and \
-                    x not in data])
-                element_queue.update(unvisited)
+                # pop an element off
+                element = element_queue.pop()
+                # and add it to the set of element which we've already seen
+                visited.add(element)
+
+                # if the element is a data type, add to our list of data
+                if element.element_type.element_category == 'D':
+                    data.add(element)
+
+                # else if it is a process type, add it's output to the queue
+                elif element.element_type.element_category == 'P':
+                    unvisited = set([x.target for x in \
+                        element.forward_relationships.filter(
+                            relationship_definition__rel_type_abbr__in=\
+                            ['HASO']) \
+                        if x not in visited and \
+                        x not in data])
+                    element_queue.update(unvisited)
+
+                # else if it is a material entity, find elements to which
+                # it is input, or elements that originated from it, and
+                # add them to the queue
+                else:
+                    unvisited = set([x.source for x in \
+                        element.reverse_relationships.filter(
+                            relationship_definition__rel_type_abbr__in=['HASI']) \
+                        if x not in visited and \
+                        x not in data])
+                    element_queue.update(unvisited)
+
+                    unvisited = set([x.target for x in \
+                        element.forward_relationships.filter(
+                            relationship_definition__rel_type_abbr__in=\
+                            ['CONT','ORIG']) \
+                        if x not in visited and \
+                        x not in data])
+                    element_queue.update(unvisited)
+
+            bag.append(data)
+
+        print "!+!+!+! %s +!+!+!+!" % str(bag)
+
+        ds = set(bag.pop())
+
+        for operator in operators:
+            if operator = 'AND':
+                ds = ds.intersection(bag.pop())
+            elif opertor = 'OR':
+                ds = ds.union(bag.pop())
+
+        print "!+!+!+! %s +!+!+!+!" % str(ds)
 
         # this is not super fancy, little status message with the number
         # of data elements we found
-        self.status = 'registered %s data elements' % len(data)
+        self.status = 'registered %s data elements' % len(ds)
 
         # save the links
         with transaction.atomic():
-            for datum in data:
+            for datum in ds:
                 if not DatasetLink.objects.filter(dataset=self, datum=datum):
                     rel = DatasetLink(dataset=self, datum=datum)
                     rel.save()
