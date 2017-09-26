@@ -132,6 +132,11 @@ class AbstractModel(Base, models.Model):
     description = models.TextField(max_length=1000, 
         help_text="Enter a description.", blank=True)
 
+    @property
+    def project(self):
+        import pdb; pdb.set_trace()
+        pass
+
     class Meta:
         abstract = True
 
@@ -843,7 +848,6 @@ class Dataset(AbstractModel):
         for symbol in symbols:
             temp_parts = []
             for part in query_parts:
-                print "!!!!!!!! %s !!! %s !!!!!!!!" % (part, query_parts)
                 temp_parts.extend(part.split(symbol))
             query_parts = temp_parts
 

@@ -3,6 +3,11 @@
 {% block content %}
     <h2>{{ verbose_name}} Detail</h2>
 
+    {% if object.project %}
+        project owner:
+        {{ project.owner }}
+    {% endif %}
+
     {% if object.get_parent_relations %}
         <hr/>
         <h3>Parents:</h3>

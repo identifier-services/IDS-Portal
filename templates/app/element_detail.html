@@ -5,6 +5,11 @@
 
     {{ object }}
 
+    {% if object.project %}
+        project owner:
+        {{ project.owner }}
+    {% endif %}
+
     <ul>
         <!-- maybe pass a generator to the template instead of this -->
         {% for node in object.project.investigation_type.graph.right %}

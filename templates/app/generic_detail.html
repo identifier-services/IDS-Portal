@@ -5,6 +5,11 @@
 
     {{ object }}
 
+    {% if object.project %}
+        project owner:
+        {{ project.owner }}
+    {% endif %}
+
     {% if object.get_parent_relations %}
         <hr/>
         <h3>From:</h3>
