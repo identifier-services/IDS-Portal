@@ -315,8 +315,6 @@ class InvestigationType(AbstractModel):
                     card_abbr=card_abbr
                 )
 
-                print source, rel_type_abbr, rel_type,
-
                 rel_def.save()
 
     class Meta:
@@ -336,6 +334,10 @@ class Project(AbstractModel):
         
     def save(self, *args, **kwargs):
         super(Project, self).save(*args, **kwargs)
+
+        # clear out anything that was previously created
+        Element.objects.filter(project=self).delete()
+        Relationship.objects.filter(source__project=self).delete()
 
         # TODO: create new investigation_type if user does not select existing
         if not self.investigation_type or not self.archive:
@@ -816,6 +818,9 @@ class Dataset(AbstractModel):
         default='', editable=False)
 
     def save(self, *args, **kwargs):
+        # delete any previous links to this dataset
+        DatasetLink.objects.filter(dataset=self).delete()
+
         # make query string uniform and replace space with white space
         # with characters that makes it easier to split off the boolean
         # and equlity operators
@@ -824,7 +829,7 @@ class Dataset(AbstractModel):
             .replace(' = ','=').replace(' # ','#')\
             .replace(' IN ','^').replace(' in ','^')\
             .replace('(','').replace(')','')\
-            .replace('=','(=)').replace('#','(#)')\
+            .replace('=','(=)').replace('#','(#)').replace('^','(^)')\
             .replace('&&','AND').replace('||','OR')\
             .replace('&','AND').replace('|','OR')\
             .replace(' and ', ' AND ').replace(' or ', ' OR ')\
@@ -839,33 +844,35 @@ class Dataset(AbstractModel):
         for symbol in symbols:
             temp_parts = []
             for part in query_parts:
+                print "!!!!!!!! %s !!! %s !!!!!!!!" % (part, query_parts)
                 temp_parts.extend(part.split(symbol))
             query_parts = temp_parts
 
         # get rid of any extra whitespace
         query_parts = map(lambda x: x.rstrip().lstrip(), query_parts)
 
-        # we'll used a named tuple to store the parts for each selection
+        # we'll use a named tuple to store the parts for each selection
         from collections import namedtuple
         Term = namedtuple('Term', ['table','field','operator','value'])
         
         terms = []
-        operators = []
+        set_operators = []
 
         # create lists of terms and boolean operators
-
         while len(query_parts) >= 4:
             terms.append(Term(*query_parts[:4]))
             query_parts = query_parts[4:]
             if query_parts:
-                operators.append(query_parts[0])
+                set_operators.append(query_parts[0])
                 query_parts = query_parts[1:]
 
         bag = []
+        # do query for each term
         for term in terms:
             element_type_name = term.table
             field_name = term.field
             value = term.value
+            equality_operator = term.operator
 
             # get the descriptor for this field on this element_type
             # (we're going to take the first one because why would you have
@@ -881,13 +888,34 @@ class Dataset(AbstractModel):
                 super(Dataset, self).save(*args, **kwargs)
                 return
 
-            # daniel bolling and stewart
-
             # query this project's value_types (e.g. ElementCharFieldValue)
             # for the given value
             value_type = descriptor.value_type
-            values = value_type.objects.filter(value=value, 
-                element_field_descriptor=descriptor, element__project=self.project)
+
+            # if equality operator is: equal
+            if equality_operator == '=':
+                values = value_type.objects.filter(value=value, 
+                    element_field_descriptor=descriptor, 
+                    element__project=self.project)
+
+            # if equality operator is: not equal
+            elif equality_operator == '#':
+                values = value_type.objects.filter( 
+                    element_field_descriptor=descriptor, 
+                    element__project=self.project).exclude(value=value)
+
+            # if equality operator is: in
+            elif equality_operator == '^':
+
+                values = value_type.objects.filter(value__in=value,
+                    element_field_descriptor=descriptor, 
+                    element__project=self.project)
+
+            else:
+                self.status = 'query syntax error'
+                super(Dataset, self).save(*args, **kwargs)
+                return
+
             if not values:
                 self.status = 'value not found.'
                 super(Dataset, self).save(*args, **kwargs)
@@ -946,18 +974,16 @@ class Dataset(AbstractModel):
 
         ds = set(bag.pop())
 
-        for operator in operators:
-            if operator == 'AND':
+        # combine results
+        for set_operator in set_operators:
+            if set_operator == 'AND':
                 ds = ds.intersection(bag.pop())
-            elif operator == 'OR':
+            elif set_operator == 'OR':
                 ds = ds.union(bag.pop())
 
         # this is not super fancy, little status message with the number
         # of data elements we found
         self.status = 'registered %s data elements' % len(ds)
-
-        # delete any previous links to this dataset
-        DatasetLink.objects.filter(dataset=self).delete()
 
         # save the links
         with transaction.atomic():
@@ -965,6 +991,12 @@ class Dataset(AbstractModel):
                 if not DatasetLink.objects.filter(dataset=self, datum=datum):
                     rel = DatasetLink(dataset=self, datum=datum)
                     rel.save()
+
+        # TODO: get rid of name and description?
+        if self.name == '':
+            self.name = self.query
+        if self.description == '':
+            self.description = self.query
 
         # save the dataset
         super(Dataset, self).save(*args, **kwargs)
