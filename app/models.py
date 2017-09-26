@@ -215,7 +215,6 @@ class InvestigationType(AbstractModel):
     # @property
     # def dependency_list(self):
     #     return self._build_dep_list(self.graph)
-        
 
     def save(self, *args, **kwargs):
         super(InvestigationType, self).save(*args, **kwargs)
@@ -229,12 +228,13 @@ class InvestigationType(AbstractModel):
             definitions = [x for x in yaml.load_all(self.definition_file.file)]
         except Exception as e:
             logger.debug(e)
+            return
 
         for definition in definitions:
             name = definition.get('name', '')
 
             description = definition.get('description', '')
-            
+
             element_category = definition.get('element category', '') or \
                 definition.get('category', '') or \
                 definition.get('element type', '') or \
@@ -244,9 +244,9 @@ class InvestigationType(AbstractModel):
                 definition.get('display field', '')
 
             fields = definition.get('fields', [])
-        
+
             elem_type = ElementType(
-                name=name, 
+                name=name,
                 description=description,
                 investigation_type=self,
                 element_category=element_category,
