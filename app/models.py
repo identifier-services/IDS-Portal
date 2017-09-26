@@ -224,6 +224,8 @@ class InvestigationType(AbstractModel):
 
         # TODO: move this code somewhere else, and don't run it in the django process!
 
+        ElementType.objects.filter(investigation_type=self).delete()
+
         definitions = []
         try:
             definitions = [x for x in yaml.load_all(self.definition_file.file)]
@@ -337,7 +339,6 @@ class Project(AbstractModel):
 
         # clear out anything that was previously created
         Element.objects.filter(project=self).delete()
-        Relationship.objects.filter(source__project=self).delete()
 
         # TODO: create new investigation_type if user does not select existing
         if not self.investigation_type or not self.archive:
