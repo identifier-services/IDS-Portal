@@ -3,6 +3,8 @@
 {% block content %}
     <h2>{{ verbose_name}} Detail</h2>
 
+    <img src="../static/lungmap_graph.png" alt="project graph" style="height: 70%; width: 70%;"></img>
+
     {% if object.get_parent_relations %}
         <hr/>
         <h3>Parents:</h3>
