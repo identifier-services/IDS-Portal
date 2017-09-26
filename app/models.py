@@ -855,11 +855,9 @@ class Dataset(AbstractModel):
         # create lists of terms and boolean operators
 
         while len(query_parts) >= 4:
-            print "&& %s &&" % query_parts
             terms.append(Term(*query_parts[:4]))
             query_parts = query_parts[4:]
             if query_parts:
-                print "-=-=-= %s -=-=-=-" % operators
                 operators.append(query_parts[0])
                 query_parts = query_parts[1:]
 
@@ -944,15 +942,11 @@ class Dataset(AbstractModel):
                         x not in data])
                     element_queue.update(unvisited)
 
-                bag.append(data)
+            bag.append(data)
 
         ds = set(bag.pop())
 
-        print 'len(ds): %s' % len(ds)
-
         for operator in operators:
-            print operator
-            print 'len(ds): %s' % len(ds)
             if operator == 'AND':
                 ds = ds.intersection(bag.pop())
             elif operator == 'OR':
@@ -961,6 +955,9 @@ class Dataset(AbstractModel):
         # this is not super fancy, little status message with the number
         # of data elements we found
         self.status = 'registered %s data elements' % len(ds)
+
+        # delete any previous links to this dataset
+        DatasetLink.objects.filter(dataset=self).delete()
 
         # save the links
         with transaction.atomic():
