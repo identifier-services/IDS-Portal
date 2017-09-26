@@ -116,15 +116,13 @@ class AbstractModel(Base, models.Model):
         try:
             self._meta.get_field('name').help_text = help_text
         except Exception as e:
-            # logger.debug(e)
-            print e
+            logger.debug(e)
 
         help_text = 'Enter a description for this %s.' % verbose_name
         try:
             self._meta.get_field('description').help_text = help_text
         except Exception as e:
-            # logger.debug(e)
-            print e
+            logger.debug(e)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -973,7 +971,12 @@ class Dataset(AbstractModel):
 
             bag.append(data)
 
-        ds = set(bag.pop())
+        if bag:
+            ds = set(bag.pop())
+        else:
+            self.status = '0 data elements found, likely bad query'
+            super(Dataset, self).save(*args, **kwargs)
+            return
 
         # combine results
         for set_operator in set_operators:

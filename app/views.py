@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.core import paginator
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import generic
@@ -115,6 +116,9 @@ class BaseGenericUpdateView(generic.UpdateView):
 class BaseGenericDeleteView(generic.DeleteView):
     template_name = 'app/generic_delete.html'
     context_object_name = 'object'
+
+    # the success url is difficult to determine, it's going to get
+    # complicated with anything other than project or investigation lists
     success_url = reverse_lazy('app:project_list')
 
     def get_context_data(self, **kwargs):
@@ -137,6 +141,16 @@ class BaseGenericDeleteView(generic.DeleteView):
                 logger.debug(e)
 
         return context
+
+    def post(self, request, *args, **kwargs):
+        if "Cancel" in request.POST:
+            url = self.success_url
+            if not url:
+                url = reverse('app:project_list')
+            return HttpResponseRedirect(url) 
+        else:
+            return super(BaseGenericDeleteView, self).post(
+                request, *args, **kwargs)
 
 #############
 # Home Page #
