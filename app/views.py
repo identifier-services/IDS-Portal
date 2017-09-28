@@ -65,7 +65,7 @@ class BaseGenericDetailView(generic.DetailView):
         #        paginators.append(pag.page(page))
         #    except:
         #        paginators.append(pag.page(1))
-        
+
         #context['page_objs'] = paginators
 
         return context

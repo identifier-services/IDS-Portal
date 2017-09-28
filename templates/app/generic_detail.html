@@ -5,10 +5,12 @@
 
     {{ object }}
 
-    {% if object.project %}
+    <p>
+    {% if object.root %}
         project owner:
-        {{ project.owner }}
+        {{ object.root.owner }}
     {% endif %}
+    </p>
 
     {% if object.get_parent_relations %}
         <hr/>
@@ -36,8 +38,11 @@
                     <li><b>{{ field.label }}:</b> {{ object.verbose_element_category }}</li>
                 {% else %}
                     <li><b>{{ field.label }}:</b> 
-                    {% if field.value.url %}
-                        <a href="{{ field.value.url }}">{{ field.value }}</a></li>
+                    <!-- TODO: figure out how to not break things if no file uploaded, readable doesn't actually do the trick -->
+                    {% if field.value.readable %}
+                        {% if field.value.url %}
+                            <a href="{{ field.value.url }}">{{ field.value }}</a></li>
+                        {% endif %}
                     {% else %}
                         {{ field.value }}</li>
                     {% endif %}

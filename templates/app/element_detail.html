@@ -5,48 +5,14 @@
 
     {{ object }}
 
-    {% if object.project %}
+    <p>
+    {% if object.root %}
         project owner:
-        {{ project.owner }}
+        {{ object.root.owner }}
     {% endif %}
+    </p>
 
-    <ul>
-        <!-- maybe pass a generator to the template instead of this -->
-        {% for node in object.project.investigation_type.graph.right %}
-            <li>{{ node }}</li>
-            <ul>
-            {% for node in node.right %}
-                <li>{{ node }}</li>
-            {% endfor %}
-            {% for node in node.left %}
-                <li>{{ node }}</li>
-            {% endfor %}
-            </ul>
-        {% endfor %}
-    </ul>
-
-    {{ object.project.investigation_type.bs_nested_list|unordered_list }}
-
-    <div class="tree">
-        <ul>
-            <li>
-            <a href="{% url 'app:project_list' %}">{{ object.project.investigation_type }}</a>
-            </li>
-            <ul>
-                <li>
-                <a href="{% url 'app:investigation_type_list' %}">{{ object.project }}</a>
-                </li>
-                <ul>
-                    {% for obj in object.project.investigation_type.elementtype_set.all %}
-                    <li>
-                    <a href="{% url 'app:element_list' %}">{{ obj|title }}</a>
-                    ({{ obj.element_set.all|length }})
-                    </li>
-                    {% endfor %}
-                </ul>
-            </ul>
-        </ul>
-    </div>
+    <img src="../static/lungmap_graph.png" alt="project graph" style="height: 70%; width: 70%;"></img>
 
     {% if object.get_parent_relations %}
         <hr/>

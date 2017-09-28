@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 from django.db import models, transaction
 from django.urls import reverse
 
+from collections import namedtuple
+
 import uuid
 import re
 import yaml
@@ -11,6 +13,15 @@ import csv
 import logging
 
 logger = logging.getLogger(__name__)
+
+# TODO: * investigation type and project need owner & collaborators
+# TODO: * they also need to be locked if an identifer has been requested
+# TODO: * should we lock the whole project, only parts related to identifier?
+# TODO: * if inv type is locked, and user wants to edit another project w/same
+# TODO:   inv type, must clone, create a new version of inv type
+# TODO: * maybe user should be able to clone project as well
+# TODO: * i think we also need a public / private flag
+# TODO: * all other things will inherit from project or inv type
 
 def snake(name):
     """
@@ -132,10 +143,16 @@ class AbstractModel(Base, models.Model):
     description = models.TextField(max_length=1000, 
         help_text="Enter a description.", blank=True)
 
-    @property
-    def project(self):
-        import pdb; pdb.set_trace()
-        pass
+    # @property
+    # def root(self):
+    #     root_objects = set({})
+    #     # import pdb; pdb.set_trace()
+    #     parent_rels = self.get_parent_relations()
+    #     for parent_rel in parent_rels:
+    #         parent = parent_rel['object']
+    #         if type(parent) == Parent:
+    #             root_objects.add(parent)
+    #         print parent, type(parent)
 
     class Meta:
         abstract = True
@@ -220,7 +237,6 @@ class InvestigationType(AbstractModel):
     # @property
     # def dependency_list(self):
     #     return self._build_dep_list(self.graph)
-        
 
     def save(self, *args, **kwargs):
         super(InvestigationType, self).save(*args, **kwargs)
@@ -234,12 +250,13 @@ class InvestigationType(AbstractModel):
             definitions = [x for x in yaml.load_all(self.definition_file.file)]
         except Exception as e:
             logger.debug(e)
+            return
 
         for definition in definitions:
             name = definition.get('name', '')
 
             description = definition.get('description', '')
-            
+
             element_category = definition.get('element category', '') or \
                 definition.get('category', '') or \
                 definition.get('element type', '') or \
@@ -249,9 +266,9 @@ class InvestigationType(AbstractModel):
                 definition.get('display field', '')
 
             fields = definition.get('fields', [])
-        
+
             elem_type = ElementType(
-                name=name, 
+                name=name,
                 description=description,
                 investigation_type=self,
                 element_category=element_category,
@@ -813,6 +830,8 @@ class DatasetLink(Base, models.Model):
 
 class Dataset(AbstractModel):
     """Joins data elements in one grouping through value query"""
+    # TODO: get rid of name and description?
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE) 
 
     query = models.TextField(blank=True, null=True, 
@@ -843,19 +862,28 @@ class Dataset(AbstractModel):
         # symbols that we will use to split the string
         symbols = ['>','<',')','(','.']
 
+        is_value = False
+
         # split query into all the parts
         query_parts = [query]
         for symbol in symbols:
             temp_parts = []
             for part in query_parts:
-                temp_parts.extend(part.split(symbol))
+                # problem, we don't want to split decimal values
+                # i should fix this with reg exp, but i'm not going to
+                # so i'm going to check to see if the last part was
+                # an equality operator
+                if is_value:
+                    temp_parts.append(part)
+                else:
+                    temp_parts.extend(part.split(symbol))
+                is_value = part in ['=','#','^']
             query_parts = temp_parts
 
         # get rid of any extra whitespace
         query_parts = map(lambda x: x.rstrip().lstrip(), query_parts)
 
         # we'll use a named tuple to store the parts for each selection
-        from collections import namedtuple
         Term = namedtuple('Term', ['table','field','operator','value'])
         
         terms = []
@@ -1000,14 +1028,14 @@ class Dataset(AbstractModel):
                     rel = DatasetLink(dataset=self, datum=datum)
                     rel.save()
 
-        # TODO: get rid of name and description?
-        if self.name == '':
-            self.name = self.query
-        if self.description == '':
-            self.description = self.query
-
         # save the dataset
         super(Dataset, self).save(*args, **kwargs)
+
+    def __str__(self):
+        if not self.name == '':
+            return self.name
+        else:
+            return self.query
 
 
 class AbstractElementFieldValue(Base, models.Model):
