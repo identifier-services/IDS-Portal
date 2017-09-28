@@ -412,7 +412,7 @@ class Project(AbstractModel):
                 # grab all field values for this element in this row
                 for field_descriptor in field_descriptors:
                     field_name = field_descriptor.label
-                    field_value = row.get(field_name)
+                    field_value = row.get(field_name).lstrip().rstrip()
                     if field_value:
                         # use this to check for uniqueness
                         field_values.update({field_name: field_value})
@@ -432,7 +432,7 @@ class Project(AbstractModel):
                     # if new element, create a new unique id
                     pk_id = uuid.uuid4()
 
-                    # does one save per element
+                    # do all the commits together
                     with transaction.atomic():
                         # create a new element
                         new_element = Element(id=pk_id,
@@ -455,7 +455,9 @@ class Project(AbstractModel):
                 #    [pk_id, element_type, descriptor_values]})
                 row.update({'__%s__ID' % element_type.name : pk_id})
 
+        #######################
         ## add relationships ##
+        #######################
 
         # do all the commits together
         with transaction.atomic():
@@ -771,18 +773,50 @@ class Element(AbstractModel):
         display_fields = self.element_type.display_field_list
         with transaction.atomic():
             for display_field in display_fields:
+                # doing a filter here in case there are multiple fields with
+                # the same label, but who would do that
                 descriptors = self.element_type.elementfielddescriptor_set.filter(
                     label=display_field)
+                # get the first descriptor if there are many
                 descriptor = next(iter(descriptors), None)
                 if descriptor:
+                    # get the type of value, for instance, char, text, date
                     value_type = descriptor.value_type
                     if value_type:
+                        # query for values that are linked to this element,
+                        # and the field descriptor from above
                         field_values = value_type.objects.filter(element=self, 
                             element_field_descriptor=descriptor)
+                        # get the first one, we should have at most one anyway
                         field_value = next(iter(field_values), None)
                         if field_value:
                             display_items.append('%s: %s' % (descriptor.label,
                                 field_value.value))
+
+                # the downside of doing this below instead of the mess above:
+                # the name field will not get populated if you happen to 
+                # have multiple descriptors to the same element type to the
+                # same field TODO: make sure can't have duplicate descriptors
+
+                # try:
+                #     descriptor = \
+                #         self.element_type.elementfielddescriptor_set.get(
+                #             label=display_field
+                #        )
+                #    field_values = \
+                #        descriptor.value_type.objects.get(
+                #            element=self, 
+                #            element_field_descriptor=descriptor
+                #        )
+                #    display_items.append('%s: %s' % (
+                #            descriptor.label,
+                #            field_value.value
+                #        )
+                #    )
+                # except Exception as e:
+                #     logger.debug(e)
+                #     return
+
             self.name = '%s: %s' % (self.element_type.name.title(),
                 ','.join(display_items))
             self.save()

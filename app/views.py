@@ -335,7 +335,9 @@ class ElementDetailView(generic.DetailView):
 
         context_object = context['object']
         descriptors = \
-            context_object.element_type.elementfielddescriptor_set.all()
+            context_object.element_type.elementfielddescriptor_set.filter(
+                element_type__element=context_object
+            )
 
         values = []
         for descriptor in descriptors:
@@ -345,9 +347,12 @@ class ElementDetailView(generic.DetailView):
             
             # get the values
             value_type = descriptor.value_type
+
             # TODO: what if more than one field value? how to prevent?
-            field_value = value_type.objects.select_related()\
-                .filter(element_field_descriptor=descriptor).first()
+            field_value = value_type.objects.filter(
+                element = context_object,
+                element_field_descriptor=descriptor
+            ).first()
 
             if field_value:
                 action_url = '%s/update' % field_value.get_absolute_url()
