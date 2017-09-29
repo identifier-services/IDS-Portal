@@ -24,7 +24,7 @@ SECRET_KEY = os.environ.get(
     'u1#(a73ptdrkbz*6$rkbz*6$h%--&ju=*6j&=_g*y4d51va%ml2')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', False)
+DEBUG = os.environ.get('DJANGO_DEBUG', False) == 'True'
 
 ALLOWED_HOSTS = ['idsvc.org', 'www.idsvc.org', 'lite.idsvc.org', 'localhost']
 
