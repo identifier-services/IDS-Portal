@@ -39,7 +39,6 @@ INSTALLED_APPS = [
 
     'ids_auth.apps.IdsAuthConfig',
     'app.apps.AppConfig',
-    'bulk.apps.BulkConfig',
 ]
 
 AUTHENTICATION_BACKENDS = (

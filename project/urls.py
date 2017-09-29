@@ -27,7 +27,6 @@ urlpatterns = [
     url(r'^auth/', include('ids_auth.urls', namespace='ids_auth')),
     url(r'^login/$', auth_views.agave_oauth, name='login'),
     url(r'^logout/$', logout, {'next_page': '/'}, name='logout'),
-    url(r'^bulk/', include('bulk.urls', namespace='bulk')),
     url(r'', include('app.urls', namespace='app')),
 ] 
 

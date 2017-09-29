@@ -1,8 +1,0 @@
-imports
-
-urlpatterns = [
-    url(r'^$'), views.home, name='x'),
-    url(r'^zip-upload/?$'), views.zip_upload, name='home'),
-    url(r'^simple-upload/?$'), views.simple_upload, name='simple-upload'),
-    url(r'^model-form-upload/?$'), views.model_form_upload, name='model-form-upload'),
-]
