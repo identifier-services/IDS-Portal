@@ -289,3 +289,7 @@ footer {
     padding: 10px;
     text-align: center;
 }
+
+svg {
+  background: #F9F9F9;
+}

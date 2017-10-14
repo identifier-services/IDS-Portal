@@ -14,44 +14,64 @@
     <img src="../static/lungmap_graph.png" alt="project graph" style="height: 70%; width: 70%;"></img>
     -->
 
-    {{ graph }}
-
     {% if graph %}
-    <svg width="960" height="960" viewBox="0 0 960 960" version="1.1"
-        xmlns="http://www.w3.org/2000/svg">
+    <svg width="100%" height="100%" 
+        viewBox="0 0 {{ graph.height}} {{ graph.width }}" 
+        version="1.1" xmlns="http://www.w3.org/2000/svg">
         <style>
             /* <![CDATA[ */
-            circle {
-                fill: white;
+            svg circle {
+                fill: #F7FCFF;
                 stroke: black;
+                stroke-width: 2px;
             }
-            text {
+            svg a:hover {
+                text-decoration: none;
+            }
+            svg text {
                 font-family: Helvetica;
                 font-size: 16px;
                 font-weight: bold;
-                fill: #404040;
+                fill: #555;
                 text-anchor: middle;
             }
-            text.itemCount {
-                font-size: 70px;
+            svg text.itemCount {
+                font-size: 65px;
                 alignment-baseline: central;
                 font-weight: bold;
-                fill: #EDEDED;
+                fill: #DFDFDF;
             }
             /* ]]> */
         </style>
+
+        <defs>
+            <marker id="right_arrow" markerWidth="6" markerHeight="6" 
+                viewBox="0 -5 10 10" refX="0" refY="0" 
+                orient="auto" markerUnits="strokeWidth">
+                <path d="M0,-5L10,0L0,5 z" fill="#000" />
+            </marker>
+
+            <line id="ltr" x1="0" y1="10" x2="70" y2="10" stroke="#000" 
+                stroke-width="3" marker-end="url(#right_arrow)" />
+        </defs>
+
+        <use x="143" y="83" href="#ltr"/>
+
         {% for node in graph.nodes %}
-        <svg x="{{ node.x }}" y="{{ node.y }}" width="112" height="112">
+        <svg x="{{ node.x }}" y="{{ node.y }}" width="103" height="103">
             <clipPath id="nodeMask">
-                <circle cx="50%" cy="50%" r="54"/>
+                <circle cx="50%" cy="50%" r="48"/>
             </clipPath>
-            <circle cx="50%" cy="50%" r="55"/>
-            <text x="50%" y="72%" class="itemCount" clip-path="url(#nodeMask)">
-                {{ node.element_count }}
-            </text>
-            <text x="50%" y="55%" clip-path="url(#nodeMask)">
-                {{ node.element_type_name }}
-            </text>
+            <a href="{{ node.url }}">
+                <circle cx="50%" cy="50%" r="50"/>
+                <text x="50%" y="72%" class="itemCount" 
+                    clip-path="url(#nodeMask)">
+                    {{ node.element_count }}
+                </text>
+                <text x="50%" y="55%" clip-path="url(#nodeMask)">
+                    {{ node.element_type_name }}
+                </text>
+            </a>
         </svg>
         {% endfor %}
         {% for edge in graph.edges %}

@@ -136,7 +136,7 @@ class BaseGenericDeleteView(generic.DeleteView):
             parent_rel = next(iter(parent_rels))
 
             try:
-                success_url = reverse('%s_detail' % parent_rel['field_name'])
+                success_url = reverse_lazy('%s_detail' % parent_rel['field_name'])
             except Exception as e:
                 logger.debug(e)
 
@@ -413,9 +413,77 @@ class DatasetDetailView(BaseGenericDetailView):
         context['verbose_name'] = verbose_name.title() 
         context['type_name'] = verbose_name.replace(' ', '_')
 
-        context_object = context['object']
+        # context_object = context['object']
+
+        graph = {
+            'height': '960',
+            'width': '720',
+            'nodes': [
+                {
+                    'x': '40',
+                    'y': '40',
+                    'element_count': '1',
+                    'element_type_name': 'Lungmap',
+                    'url': reverse_lazy('app:investigation_type_list'),
+                },
+                {
+                    'x': '230',
+                    'y': '40',
+                    'element_count': '1',
+                    'element_type_name': 'Project',
+                    'url': reverse_lazy('app:project_list'),
+                },
+                {
+                    'x': '230',
+                    'y': '230',
+                    'element_count': '10',
+                    'element_type_name': 'Specimen',
+                    'url': reverse_lazy('app:element_list'),
+                },
+                {
+                    'x': '400',
+                    'y': '230',
+                    'element_count': '30',
+                    'element_type_name': 'Chunk',
+                    'url': reverse_lazy('app:element_list'),
+                },
+                {
+                    'x': '230',
+                    'y': '400',
+                    'element_count': '1',
+                    'element_type_name': 'Probe',
+                    'url': reverse_lazy('app:element_list'),
+                },
+                {
+                    'x': '400',
+                    'y': '400',
+                    'element_count': '30',
+                    'element_type_name': 'Process',
+                    'url': reverse_lazy('app:element_list'),
+                },
+                {
+                    'x': '400',
+                    'y': '570',
+                    'element_count': '30',
+                    'element_type_name': 'Image',
+                    'url': reverse_lazy('app:element_list'),
+                },
+                {
+                    'x': '570',
+                    'y': '570',
+                    'element_count': '1',
+                    'element_type_name': 'Dataset',
+                    'url': reverse_lazy('app:dataset_list'),
+                },
+            ],
+            'edges': [                                                          
+            ]
+        }
+
+        context['graph'] = graph
 
         return context
+
 
 class DatasetUpdateView(BaseGenericUpdateView):
     model = Dataset
