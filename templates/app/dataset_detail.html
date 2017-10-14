@@ -10,7 +10,55 @@
     {% endif %}
     </p>
 
+    <!--
     <img src="../static/lungmap_graph.png" alt="project graph" style="height: 70%; width: 70%;"></img>
+    -->
+
+    {{ graph }}
+
+    {% if graph %}
+    <svg width="960" height="960" viewBox="0 0 960 960" version="1.1"
+        xmlns="http://www.w3.org/2000/svg">
+        <style>
+            /* <![CDATA[ */
+            circle {
+                fill: white;
+                stroke: black;
+            }
+            text {
+                font-family: Helvetica;
+                font-size: 16px;
+                font-weight: bold;
+                fill: #404040;
+                text-anchor: middle;
+            }
+            text.itemCount {
+                font-size: 70px;
+                alignment-baseline: central;
+                font-weight: bold;
+                fill: #EDEDED;
+            }
+            /* ]]> */
+        </style>
+        {% for node in graph.nodes %}
+        <svg x="{{ node.x }}" y="{{ node.y }}" width="112" height="112">
+            <clipPath id="nodeMask">
+                <circle cx="50%" cy="50%" r="54"/>
+            </clipPath>
+            <circle cx="50%" cy="50%" r="55"/>
+            <text x="50%" y="72%" class="itemCount" clip-path="url(#nodeMask)">
+                {{ node.element_count }}
+            </text>
+            <text x="50%" y="55%" clip-path="url(#nodeMask)">
+                {{ node.element_type_name }}
+            </text>
+        </svg>
+        {% endfor %}
+        {% for edge in graph.edges %}
+
+        {% endfor %}
+    </svg>
+    {% endif %}
 
     {% if object.get_parent_relations %}
         <hr/>
