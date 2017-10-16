@@ -20,11 +20,13 @@ body {
 
 @media (max-width: 980px) {
     body {
+        /*
         background: linear-gradient(
             180deg,
             #ec502e 37px,
             rgba(255, 255, 255, 1.0) 37px
         ), no-repeat 0 0 !important;
+        */
     }
 }
 
@@ -45,7 +47,7 @@ hr {
 }
 
 li {
-    padding: 5px;
+    padding-right: 5px;
 }
 
 header {
@@ -53,7 +55,7 @@ header {
 }
 
 main {
-    padding: 20px;
+    /* padding: 20px; */
 }
 
 main>ul {
@@ -207,6 +209,7 @@ main>p:last-of-type {
     font-size: 45px;
     letter-spacing: 1.2px;
     line-height: 40px;
+    text-decoration: none;
     color: #ec502e;
 }
 
@@ -244,6 +247,7 @@ main>p:last-of-type {
         font-family: 'Ramabhadra', Helvetica, sans-serif;
         font-size: 39px;
         letter-spacing: 1.3px;
+        text-decoration: none;
         line-height: 28px;
         color: #ec502e;
     }
@@ -285,11 +289,11 @@ main>p:last-of-type {
     color: black;
 }
 
+#nav-highlights li a:hover {
+    text-decoration: underline;
+}
+
 footer {
     padding: 10px;
     text-align: center;
-}
-
-svg {
-  background: #F9F9F9;
 }

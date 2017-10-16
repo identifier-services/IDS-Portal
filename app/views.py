@@ -416,39 +416,39 @@ class DatasetDetailView(BaseGenericDetailView):
         # context_object = context['object']
 
         graph = {
-            'height': '960',
-            'width': '720',
+            'height': '740',
+            'width': '740',
             'nodes': [
                 {
-                    'x': '40',
-                    'y': '40',
+                    'x': '0',
+                    'y': '0',
                     'element_count': '1',
                     'element_type_name': 'Lungmap',
                     'url': reverse_lazy('app:investigation_type_list'),
                 },
                 {
-                    'x': '230',
-                    'y': '40',
+                    'x': '200',
+                    'y': '0',
                     'element_count': '1',
                     'element_type_name': 'Project',
                     'url': reverse_lazy('app:project_list'),
                 },
                 {
-                    'x': '230',
-                    'y': '230',
+                    'x': '200',
+                    'y': '200',
                     'element_count': '10',
                     'element_type_name': 'Specimen',
                     'url': reverse_lazy('app:element_list'),
                 },
                 {
                     'x': '400',
-                    'y': '230',
+                    'y': '200',
                     'element_count': '30',
                     'element_type_name': 'Chunk',
                     'url': reverse_lazy('app:element_list'),
                 },
                 {
-                    'x': '230',
+                    'x': '200',
                     'y': '400',
                     'element_count': '1',
                     'element_type_name': 'Probe',
@@ -463,20 +463,50 @@ class DatasetDetailView(BaseGenericDetailView):
                 },
                 {
                     'x': '400',
-                    'y': '570',
+                    'y': '600',
                     'element_count': '30',
                     'element_type_name': 'Image',
                     'url': reverse_lazy('app:element_list'),
                 },
                 {
-                    'x': '570',
-                    'y': '570',
+                    'x': '600',
+                    'y': '600',
                     'element_count': '1',
                     'element_type_name': 'Dataset',
                     'url': reverse_lazy('app:dataset_list'),
                 },
             ],
             'edges': [                                                          
+                {
+                    'x': '100',
+                    'y': '50',
+                    'direction': 'right',
+                },
+                {
+                    'x': '300',
+                    'y': '250',
+                    'direction': 'right',
+                },
+                {
+                    'x': '450',
+                    'y': '300',
+                    'direction': 'down',
+                },
+                {
+                    'x': '300',
+                    'y': '450',
+                    'direction': 'right',
+                },
+                {
+                    'x': '450',
+                    'y': '500',
+                    'direction': 'down',
+                },
+                {
+                    'x': '500',
+                    'y': '650',
+                    'direction': 'right',
+                },
             ]
         }
 
