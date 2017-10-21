@@ -758,11 +758,29 @@ class RelationshipDefinition(Base, models.Model):
         )
 
 
+class Path(models.Model):
+    """
+    Collection of all elements with some immediate or distant
+    relationship to another element or dataset.
+    """
+    # TODO: Do we need to inherit from base?
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+
+class PathMember(Base, models.Model):
+    """Provides a link from an element to a path."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    path = models.ForeignKey(Path, on_delete=models.CASCADE)
+    element = models.ForeignKey('Element', on_delete=models.CASCADE)
+
+
 class Element(AbstractModel):
     """Model representing an individual element."""
 
     element_type = models.ForeignKey(ElementType, on_delete=models.CASCADE) 
     project = models.ForeignKey(Project, on_delete=models.CASCADE) 
+    path = models.OneToOneField(Path, on_delete=models.CASCADE, 
+        null=True, blank=True)
 
     @property
     def element_category(self):
@@ -822,6 +840,11 @@ class Element(AbstractModel):
             self.save()
 
     def save(self, *args, **kwargs):
+        # make sure each dataset has a path
+        path, created = Path.objects.get_or_create(element=self)
+        if created:
+            self.path = path
+
         super(Element, self).save(*args, **kwargs)
 
         if self.element_category == ElementType.DAT:
@@ -874,7 +897,15 @@ class Dataset(AbstractModel):
     status = models.CharField(max_length=200, blank=True, null=True,
         default='', editable=False)
 
+    path = models.OneToOneField(Path, on_delete=models.CASCADE,
+        null=True, blank=True)
+
     def save(self, *args, **kwargs):
+        path, created = Path.objects.get_or_create(dataset=self)
+
+        if created:
+            self.path = path
+
         # delete any previous links to this dataset
         DatasetLink.objects.filter(dataset=self).delete()
 
@@ -939,47 +970,66 @@ class Dataset(AbstractModel):
             value = term.value
             equality_operator = term.operator
 
-            # get the descriptor for this field on this element_type
-            # (we're going to take the first one because why would you have
-            # the same field twice on one element? you might though so that's
-            # why i'm using filter rather than get)
-            descriptors = ElementFieldDescriptor.objects.filter(
-                element_type__name=element_type_name,
-                label=field_name
-            )
-            descriptor = next(iter(descriptors), None)
-            if not descriptor:
-                self.status = 'element or field not found'
-                super(Dataset, self).save(*args, **kwargs)
-                return
+            standard_field = field_name.lower() in ['id','name']
 
-            # query this project's value_types (e.g. ElementCharFieldValue)
-            # for the given value
-            value_type = descriptor.value_type
+            if standard_field:
+                # if equality operator is: equal
+                if equality_operator == '=':
+                    values = Element.objects.filter(
+                        project=self.project, **{field_name:value})
 
-            # if equality operator is: equal
-            if equality_operator == '=':
-                values = value_type.objects.filter(value=value, 
-                    element_field_descriptor=descriptor, 
-                    element__project=self.project)
+                # if equality operator is: not equal
+                elif equality_operator == '#':
+                    values = Element.objects.filter( 
+                        project=self.project).exclude(
+                            **{field_name:value})
 
-            # if equality operator is: not equal
-            elif equality_operator == '#':
-                values = value_type.objects.filter( 
-                    element_field_descriptor=descriptor, 
-                    element__project=self.project).exclude(value=value)
-
-            # if equality operator is: in
-            elif equality_operator == '^':
-
-                values = value_type.objects.filter(value__in=value,
-                    element_field_descriptor=descriptor, 
-                    element__project=self.project)
+                # if equality operator is: in
+                elif equality_operator == '^':
+                    values = Element.objects.filter(
+                        project=self.project, **{field_name:value})
 
             else:
-                self.status = 'query syntax error'
-                super(Dataset, self).save(*args, **kwargs)
-                return
+                # get the descriptor for this field on this element_type
+                # (we're going to take the first one because why would you have
+                # the same field twice on one element? you might though so that's
+                # why i'm using filter rather than get)
+                descriptors = ElementFieldDescriptor.objects.filter(
+                    element_type__name=element_type_name,
+                    label=field_name
+                )
+                descriptor = next(iter(descriptors), None)
+                if not descriptor:
+                    self.status = 'element or field not found'
+                    super(Dataset, self).save(*args, **kwargs)
+                    return
+
+                # query this project's value_types (e.g. ElementCharFieldValue)
+                # for the given value
+                value_type = descriptor.value_type
+
+                # if equality operator is: equal
+                if equality_operator == '=':
+                    values = value_type.objects.filter(value=value, 
+                        element_field_descriptor=descriptor, 
+                        element__project=self.project)
+
+                # if equality operator is: not equal
+                elif equality_operator == '#':
+                    values = value_type.objects.filter( 
+                        element_field_descriptor=descriptor, 
+                        element__project=self.project).exclude(value=value)
+
+                # if equality operator is: in
+                elif equality_operator == '^':
+                    values = value_type.objects.filter(value__in=value,
+                        element_field_descriptor=descriptor, 
+                        element__project=self.project)
+
+                else:
+                    self.status = 'query syntax error'
+                    super(Dataset, self).save(*args, **kwargs)
+                    return
 
             if not values:
                 self.status = 'value not found.'
@@ -988,7 +1038,11 @@ class Dataset(AbstractModel):
 
             # grab the elements from the queried field values
             # put the elements in a queue (a set, we want only unique elements)
-            element_queue = set([x.element for x in values])
+
+            if standard_field:
+                element_queue = set(values)
+            else:
+                element_queue = set([x.element for x in values])
             visited = set()
             self.status = '%s elements found' % len(element_queue)
 
@@ -1061,6 +1115,11 @@ class Dataset(AbstractModel):
                 if not DatasetLink.objects.filter(dataset=self, datum=datum):
                     rel = DatasetLink(dataset=self, datum=datum)
                     rel.save()
+
+        ### in development ###
+        # add elements to the dataset's path
+        for element in visited:
+            PathMember.objects.create(path=self.path, element=element)
 
         # save the dataset
         super(Dataset, self).save(*args, **kwargs)
@@ -1170,4 +1229,3 @@ class ElementUrlFieldValue(AbstractElementFieldValue):
 # 
 #     class Meta:
 #         verbose_name = 'url'
-
