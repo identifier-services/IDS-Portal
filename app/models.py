@@ -862,10 +862,10 @@ class Relationship(Base, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     source = models.ForeignKey(Element, on_delete=models.CASCADE, 
-        related_name='forward_relationships')
+        related_name='incoming_relationships')
 
     target = models.ForeignKey(Element, on_delete=models.CASCADE, 
-        related_name='reverse_relationships')
+        related_name='outgoing_relationships')
 
     relationship_definition = models.ForeignKey(RelationshipDefinition, 
         on_delete=models.CASCADE, related_name='definition')
@@ -905,6 +905,9 @@ class Dataset(AbstractModel):
 
         if created:
             self.path = path
+
+        # remove any previously existing path members
+        PathMember.objects.filter(path=self.path).delete()
 
         # delete any previous links to this dataset
         DatasetLink.objects.filter(dataset=self).delete()
@@ -1038,7 +1041,6 @@ class Dataset(AbstractModel):
 
             # grab the elements from the queried field values
             # put the elements in a queue (a set, we want only unique elements)
-
             if standard_field:
                 element_queue = set(values)
             else:
@@ -1063,7 +1065,7 @@ class Dataset(AbstractModel):
                 # else if it is a process type, add it's output to the queue
                 elif element.element_type.element_category == 'P':
                     unvisited = set([x.target for x in \
-                        element.forward_relationships.filter(
+                        element.incoming_relationships.filter(
                             relationship_definition__rel_type_abbr__in=\
                             ['HASO']) \
                         if x not in visited and \
@@ -1075,14 +1077,14 @@ class Dataset(AbstractModel):
                 # add them to the queue
                 else:
                     unvisited = set([x.source for x in \
-                        element.reverse_relationships.filter(
+                        element.outgoing_relationships.filter(
                             relationship_definition__rel_type_abbr__in=['HASI']) \
                         if x not in visited and \
                         x not in data])
                     element_queue.update(unvisited)
 
                     unvisited = set([x.target for x in \
-                        element.forward_relationships.filter(
+                        element.incoming_relationships.filter(
                             relationship_definition__rel_type_abbr__in=\
                             ['CONT','ORIG']) \
                         if x not in visited and \
@@ -1116,13 +1118,101 @@ class Dataset(AbstractModel):
                     rel = DatasetLink(dataset=self, datum=datum)
                     rel.save()
 
-        ### in development ###
-        # add elements to the dataset's path
-        for element in visited:
-            PathMember.objects.create(path=self.path, element=element)
-
         # save the dataset
         super(Dataset, self).save(*args, **kwargs)
+
+        ## add elements to path ##
+
+        # add contents of dataset to a queue
+        path_queue = set(ds)
+        # clear visisted set
+        visited.clear()
+
+        path_members = set()
+
+        # while the queue is not empty
+        while path_queue:
+            # pop an element off
+            element = path_queue.pop()
+            # and add it to the set of element which we've already seen
+            visited.add(element)
+            ###
+            if element in path_members:
+                continue
+
+            if element.element_type.element_category == 'D':
+                if element in ds:
+                    path_members.add(element)
+                    print "\nelement: %s\n, cat: %s" % (element, element.element_type.element_category)
+            elif element.element_type.element_category == 'P':
+                path_members.add(element)
+                print "\nelement: %s\n, cat: %s" % (element, element.element_type.element_category)
+            else:
+                path_members.add(element)
+                print "\nelement: %s\n, cat: %s" % (element, element.element_type.element_category)
+
+            unvisited = set([x.source for x in \
+                element.outgoing_relationships.all()
+                if x not in visited and \
+                x not in path_members])
+            path_queue.update(unvisited)
+
+            print "\nincoming unvisited: %s\n" % (unvisited)
+            print element.incoming_relationships.all()
+
+            unvisited = set([x.target for x in \
+                element.incoming_relationships.all()
+                if x not in visited and \
+                x not in path_members])
+            path_queue.update(unvisited)
+
+            print "\noutgoing unvisited: %s\n" % (unvisited)
+            print element.outgoing_relationships.all()
+
+            # # if the element is a data type, add to our list of data
+            # if element.element_type.element_category == 'D':
+            #     unvisited = set([x.target for x in \
+            #         element.outgoing_relationships.filter(
+            #             relationship_definition__rel_type_abbr__in=\
+            #             ['HASI']) \
+            #         if x not in visited and \
+            #         x not in path_members])
+            #     path_queue.update(unvisited)
+            # 
+            #     print unvisited
+            #
+            # # else if it is a process type, add it's output to the queue
+            # elif element.element_type.element_category == 'P':
+            #     unvisited = set([x.target for x in \
+            #         element.incoming_relationships.filter(
+            #             relationship_definition__rel_type_abbr__in=\
+            #             ['HASI']) \
+            #         if x not in visited and \
+            #         x not in path_members])
+            #     path_queue.update(unvisited)
+            # 
+            # # else if it is a material entity, find elements to which
+            # # it is input, or elements that originated from it, and
+            # # add them to the queue
+            # else:
+            #     unvisited = set([x.source for x in \
+            #         element.outgoing_relationships.filter(
+            #             relationship_definition__rel_type_abbr__in=['PART']) \
+            #         if x not in visited and \
+            #         x not in path_members])
+            #     path_queue_queue.update(unvisited)
+            # 
+                # unvisited = set([x.target for x in \
+                #     element.incoming_relationships.filter(
+                #         relationship_definition__rel_type_abbr__in=\
+                #         ['CONT','ORIG']) \
+                #     if x not in visited and \
+                #     x not in path_members])
+                # path_queue.update(unvisited)
+
+        for element in path_members:
+            PathMember.objects.create(path=self.path, element=element)
+
 
     def __str__(self):
         if not self.name == '':

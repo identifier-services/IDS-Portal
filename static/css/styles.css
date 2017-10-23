@@ -297,3 +297,44 @@ footer {
     padding: 10px;
     text-align: center;
 }
+
+/* ## SVG ## */
+
+/* these media queries are super hacky */
+
+@media (min-width: 496px) {
+    svg {
+        width: 480px;
+    }
+}
+
+@media (max-width: 495px) {
+    svg {
+        width: 100%;
+    }
+}
+
+svg circle {
+    fill: #F7FCFF;
+    stroke: black;
+    stroke-width: 2px;
+}
+
+svg a:hover {
+    text-decoration: none;
+}
+
+svg text {
+    font-family: 'Nunito Sans', Helvetica;
+    font-size: 16px;
+    font-weight: bold;
+    fill: #555;
+    text-anchor: middle;
+}
+
+svg text.itemCount {
+    font-size: 65px;
+    alignment-baseline: baseline;
+    font-weight: bold;
+    fill: #DFDFDF;
+}

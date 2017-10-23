@@ -57,11 +57,11 @@
     <h3>Siblings:</h3>
     <ul>
         <!--<h4>Forward:</h4>-->
-        {% for sib in object.forward_relationships.all %}
+        {% for sib in object.incoming_relationships.all %}
             <li><a href="{{ sib.target.get_absolute_url}}">{{ sib.target }}</a></li>
         {% endfor %}
         <!--<h4>Reverse:</h4>-->
-        {% for sib in object.reverse_relationships.all %}
+        {% for sib in object.outgoing_relationships.all %}
             <li><a href="{{ sib.source.get_absolute_url}}">{{ sib.source }}</a></li>
         {% endfor %}
     </ul>
