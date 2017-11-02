@@ -50,6 +50,7 @@
         {% endfor %}
     </ul>
 
+    <a href="{{ object.get_absolute_url }}/publish">Request DOI</a>
     <a href="{{ object.get_absolute_url }}/update">Edit {{ verbose_name }}</a>
     <a href="{{ object.get_absolute_url }}/delete">Delete {{ verbose_name }}</a>
 {% endblock %}

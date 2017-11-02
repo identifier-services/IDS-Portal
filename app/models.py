@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from agavepy.agave import Agave
+
+from django.conf import settings
 from django.db import models, transaction
 from django.urls import reverse
+from django.utils import timezone
 
 from collections import namedtuple
 
@@ -22,6 +26,12 @@ logger = logging.getLogger(__name__)
 # TODO: * maybe user should be able to clone project as well
 # TODO: * i think we also need a public / private flag
 # TODO: * all other things will inherit from project or inv type
+
+
+portal_agave_client = Agave(
+    api_server=settings.AGAVE_TENANT_BASEURL,
+    token=settings.AGAVE_SUPER_TOKEN
+)
 
 def snake(name):
     """
@@ -770,8 +780,77 @@ class Path(models.Model):
 class PathMember(Base, models.Model):
     """Provides a link from an element to a path."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    path = models.ForeignKey(Path, on_delete=models.CASCADE)
+    path = models.ForeignKey(Path, on_delete=models.CASCADE, editable=False)
     element = models.ForeignKey('Element', on_delete=models.CASCADE)
+
+
+class Checksum(Base, models.Model):
+    """Relates two elements"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # TODO: should i change this to a field? like url, maybe sra?
+    data = models.ForeignKey('Element', on_delete=models.CASCADE)
+
+    REQ = 'REQ'
+    ERR = 'ERR'
+    CMP = 'CMP' 
+
+    STATUS_TYPES = (
+        (REQ, 'requested'),
+        (ERR, 'failed'),
+        (CMP, 'completed'),
+    )
+
+    status = models.CharField(
+        "status",
+        max_length = 3,
+        choices = STATUS_TYPES,
+        default=REQ,
+    )
+
+    WEB = 'WEB'
+    SRA = 'SRA'
+    AGV = 'AGV' 
+
+    RESOURCE_TYPES = (
+        (WEB, 'url'),
+        (SRA, 'sra'),
+        (AGV, 'agave'),
+    )
+
+    resource_type = models.CharField(
+        "resource type",
+        max_length = 3,
+        choices = RESOURCE_TYPES,
+        default=WEB,
+    )
+
+    jobid = models.CharField(max_length=40, 
+        help_text="Checksum job id",blank=True)
+    value = models.CharField(max_length=200, 
+        help_text="Checksum value",blank=True)
+    error_message = models.CharField(max_length=512, 
+        help_text="Error message",blank=True)
+    initiated = models.DateTimeField(auto_now_add=True)
+    completed = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # TODO set completed date when value is set
+        if self.id:
+            if not self.completed:
+                self.completed = timezone.now()
+        return super(Checksum, self).save(*args, **kwargs)
+
+    def __str__(self):
+        s = ''
+        if self.status == self.ERR:
+            s = 'checksum failed at: %s (%s)' % (
+                str(self.completed), self.error_message)
+        elif self.status == self.CMP:
+            s = 'checksum completed at: %s (%s)' % (
+                str(self.completed), self.value)
+        else:
+            s = 'checksum requested at: %s' % str(self.initiated)
+        return s
 
 
 class Element(AbstractModel):
@@ -839,6 +918,67 @@ class Element(AbstractModel):
                 ','.join(display_items))
             self.save()
 
+    def initiate_checksum(self):
+        if not self.id:
+            logger.error('Checksum attempted on unsaved data element.')
+            return
+
+        # this is super hacky, i'd like to just mark fields in the
+        # yaml as containing the location to checksum, and then
+        # checksum would be associated directly with the field values
+        url = next(iter(
+                [field.value for field in self.elementurlfieldvalue_set.all()]
+            ),None)
+        path = next(iter(
+                [field.value for field in self.elementcharfieldvalue_set.all()\
+                    if 'path' in field.element_field_descriptor.label.lower() \
+                    and 'agave://' in field.value]
+            ),None)
+        sra = next(iter(
+                [field.value for field in self.elementcharfieldvalue_set.all()\
+            if 'sra' in field.element_field_descriptor.label.lower()]),None)
+
+        inputs = {}
+        parameters = {}
+        resource_type = None
+        if url:
+            parameters.update({'URL': url})
+            resource_type = 'WEB'
+        elif sra:
+            parameters.update({'SRA': sra})
+            resource_type = 'SRA'
+        elif path:
+            inputs.update({'AGAVE_URL': path})
+            resource_type = 'AGV'
+        else:
+            logger.debug(
+                'Could not initiate checksum, no location information found.')
+            return
+
+        checksum = Checksum(data=self, resource_type=resource_type)
+
+        parameters.update({'UUID': str(checksum.id)})
+
+        body = {
+            'name': 'checksum',
+            'appId': 'idsvc_checksum-0.1',
+            'inputs': inputs,
+            'parameters': parameters,
+            'archive': True,
+            'archivePath': 'idsvc_user/archive/jobs/${JOB_NAME}=${JOB_ID}'
+        }
+
+        try:
+            response = portal_agave_client.jobs.submit(body=body)
+            checksum.jobid = response['id']
+            checksum.save()
+            logger.debug(
+                'Checksum job id: %s' % response['id']
+            )
+        except Exception as e:
+            error_msg = 'Checksum job was not successfully initated.'
+            logger.error('%s -- %s' % (error_msg, e))
+
     def save(self, *args, **kwargs):
         # make sure each dataset has a path
         path, created = Path.objects.get_or_create(element=self)
@@ -849,6 +989,7 @@ class Element(AbstractModel):
 
         if self.element_category == ElementType.DAT:
             #TODO trigger checksum app
+            # self.initiate_checksum()
             pass
 
     def __str__(self):
@@ -898,7 +1039,11 @@ class Dataset(AbstractModel):
         default='', editable=False)
 
     path = models.OneToOneField(Path, on_delete=models.CASCADE,
-        null=True, blank=True)
+        null=True, blank=True, editable=False)
+
+    def request_doi(self):
+        logger.debug('requesting doi')
+        pass
 
     def save(self, *args, **kwargs):
         path, created = Path.objects.get_or_create(dataset=self)
@@ -1130,6 +1275,22 @@ class Dataset(AbstractModel):
 
         path_members = set()
 
+        ### hurts my brain
+
+        # so we start with the data elements (images in james's case)
+        # the images are contained by this dataset
+        # connected by a DatasetLink: Dataset<-DatasetLink->Data
+        # for each image we want to know what process created it
+        # and we want to know the inputs to those processes
+        # and we want to know the 'parents' of those inputs
+
+        # the image has a fk to the process
+        # from the image perspective, the process is a...
+        # 
+
+        ###
+
+
         # while the queue is not empty
         while path_queue:
             # pop an element off
@@ -1143,13 +1304,10 @@ class Dataset(AbstractModel):
             if element.element_type.element_category == 'D':
                 if element in ds:
                     path_members.add(element)
-                    print "\nelement: %s\n, cat: %s" % (element, element.element_type.element_category)
             elif element.element_type.element_category == 'P':
                 path_members.add(element)
-                print "\nelement: %s\n, cat: %s" % (element, element.element_type.element_category)
             else:
                 path_members.add(element)
-                print "\nelement: %s\n, cat: %s" % (element, element.element_type.element_category)
 
             unvisited = set([x.source for x in \
                 element.outgoing_relationships.all()
@@ -1212,7 +1370,6 @@ class Dataset(AbstractModel):
 
         for element in path_members:
             PathMember.objects.create(path=self.path, element=element)
-
 
     def __str__(self):
         if not self.name == '':

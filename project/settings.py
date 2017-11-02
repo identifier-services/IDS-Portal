@@ -200,3 +200,6 @@ AGAVE_SUPER_TOKEN = os.environ.get('AGAVE_SUPER_TOKEN')
 
 # Other agave stuff
 AGAVE_TOKEN_SESSION_ID = 'agave_token'
+
+# celery
+CELERY_BROKER_URL = 'amqp://localhost'

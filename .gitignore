@@ -7,3 +7,4 @@ media/
 *.secret
 *.bak
 app/static
+*.submit

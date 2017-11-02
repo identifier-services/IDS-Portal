@@ -68,6 +68,7 @@
 
     
     {% if object.element_category == 'D' %}
+
     <hr/>
     <h3>Datasets:</h3>
     <ul>
@@ -78,6 +79,23 @@
             <p>This data element does not belong to a dataset.</p>
         {% endif %}
     </ul>
+
+    <hr/>
+    <h3>Checksum:</h3>
+    <ul>
+        {% for checksum in object.checksum_set.all %}
+        <li>
+            {% for field in checksum.get_fields %}
+                <li><b>{{ field.label }}:</b> {{ field.value }}</li>
+            {% endfor %}
+        </li>
+        {% endfor %}
+        {% if not object.checksum_set.all %}
+            <p>No checksum verifications have been requested on this data element.</p>
+        {% endif %}
+    </ul>
+
+    <a href="{{ object.get_absolute_url}}/verify">Verify Location</a>
     {% endif %}
 
     <a href="{{ object.get_absolute_url }}/update">Edit {{ verbose_name }}</a>

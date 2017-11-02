@@ -2,10 +2,11 @@
 from __future__ import unicode_literals
 
 from django.core import paginator
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import generic
+from django.views.decorators.csrf import csrf_exempt
 
 import logging
 
@@ -13,7 +14,7 @@ from zipfile import ZipFile
 import csv
 
 from .models import (InvestigationType, Project, ElementType,
-    RelationshipDefinition, ElementFieldDescriptor, Element, Dataset,
+    RelationshipDefinition, ElementFieldDescriptor, Element, Checksum, Dataset,
     ElementCharFieldValue, ElementTextFieldValue, ElementIntFieldValue,
     ElementFloatFieldValue, ElementDateFieldValue, ElementUrlFieldValue)
 
@@ -146,7 +147,7 @@ class BaseGenericDeleteView(generic.DeleteView):
         if "Cancel" in request.POST:
             url = self.success_url
             if not url:
-                url = reverse('app:project_list')
+                url = reverse_lazy('app:project_list')
             return HttpResponseRedirect(url) 
         else:
             return super(BaseGenericDeleteView, self).post(
@@ -183,7 +184,6 @@ class InvestigationTypeUpdateView(BaseGenericUpdateView):
 
 class InvestigationTypeDeleteView(BaseGenericDeleteView):
     model = InvestigationType
-    # success_url = reverse('app:index')
 
 ###########
 # Project #
@@ -315,6 +315,19 @@ class RelationshipDefinitionDeleteView(BaseGenericDeleteView):
 # Element #
 ###########
 
+
+def element_init_checksum(request, pk):
+    try:
+        element = Element.objects.get(id=pk)
+        element.initiate_checksum()
+    except Exception as e:
+        logger.error(e)
+        return HttpResponseRedirect(reverse_lazy('app:project_list'))
+
+    return HttpResponseRedirect(reverse_lazy(
+            'app:element_detail',kwargs={'pk': pk}))
+
+
 class ElementListView(BaseGenericListView):
     model = Element
 
@@ -379,7 +392,9 @@ class ElementDetailView(generic.DetailView):
             })
         context['values'] = values
 
-        # import pdb; pdb.set_trace()
+        sums = Checksum.objects.filter(data=context_object.id)
+
+        print sums
 
         return context
 
@@ -394,6 +409,18 @@ class ElementDeleteView(BaseGenericDeleteView):
 ###########
 # Dataset #
 ###########
+
+def request_doi(request, pk):
+    try:
+        dataset = Dataset.objects.get(id=pk)
+        dataset.request_doi()
+    except Exception as e:
+        logger.error(e)
+        return HttpResponseRedirect(reverse_lazy('app:project_list'))
+
+    return HttpResponseRedirect(reverse_lazy(
+            'app:dataset_detail',kwargs={'pk': pk}))
+
 
 class DatasetListView(BaseGenericListView):
     model = Dataset
@@ -660,3 +687,50 @@ class ElementUrlFieldValueUpdateView(BaseGenericUpdateView):
 
 class ElementUrlFieldValueDeleteView(BaseGenericDeleteView):
     model = ElementUrlFieldValue
+
+############
+# Checksum #
+############
+
+class ChecksumListView(BaseGenericListView):
+    model = Checksum
+
+
+class ChecksumCreateView(BaseGenericCreateView):
+    model = Checksum
+
+
+class ChecksumDetailView(BaseGenericDetailView):
+    model = Checksum
+
+
+#class ChecksumUpdateView(BaseGenericUpdateView):
+#    model = Checksum
+
+@csrf_exempt
+def checksum_update(request, pk, *args, **kwargs):
+    data_id = None
+    try:
+        checksum = Checksum.objects.get(id=pk)
+        value = request.POST.get('checksum', None)
+        err_msg = request.POST.get('error', None)
+
+        if value:
+            checksum.value = value
+            checksum.status = 'CMP'
+        if err_msg:
+            checksum.error_message = err_msg
+            checksum.status = 'ERR'
+
+        if value or err_msg:
+            checksum.save()
+    except Exception as e:
+        logger.error(e)
+        return HttpResponse('Error: %s' % e)
+
+    return HttpResponse('OK')
+
+
+class ChecksumDeleteView(BaseGenericDeleteView):
+    model = Checksum
+
