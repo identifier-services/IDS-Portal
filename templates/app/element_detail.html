@@ -73,25 +73,44 @@
 
     <hr/>
     <h3>Checksum:</h3>
-    {% if object.checksums %}
-        <p>The last <a href="{{ objects.checksums.0.link }}">checksum</a> was 
-        {% if objects.checksums.0.good %}
-        <span class="green">good</span>
-        {% else %}
-        <span class="red">bad</span>
-        {% endif %}
-        </p>
-
-        {% for checksum in object.checksums %}
-            <p>Status: <a href="{{ objects.link }}">
-                {% if checksum.good %}
-                <span class="green">good</span>
-                {% else %}
-                <span class="red">bad</span>
-                {% endif %}
+    {% if checksums %}
+        <ul>
+            <p>Status of last <a href="{{ checksums.0.link }}">checksum</a>: 
+            {% if checksums.0.status == 'good' %}
+            <span class="good">good</span>
+            {% elif checksums.0.status == 'conflict' %}
+            <span class="bad">conflict</span>
+            {% elif checksums.0.status == 'failed' %}
+            <span class="bad">failed</span>
+                    {% if checksums.0.message %}
+                    Error messsage: {{ checksums.0.message }}
+                    {% endif %}
+            {% else %}
+            <span>in progress</span>
+            {% endif %}
             </p>
-            <p>Date: {{ checksum.date }}</p>
-        {% endfor %}
+
+            {% for checksum in checksums %}
+                <li>
+                <span>Status: <a href="{{ checksum.link }}">
+                    {% if checksum.status == 'good' %}
+                    <span class="good">good</span>
+                    {% elif checksum.status == 'conflict' %}
+                    <span class="bad">conflict</span>
+                    {% elif checksum.status == 'failed' %}
+                    <span class="bad">failed</span>
+                            {% if checksum.message %}
+                            Error messsage: {{ checksum.message }}
+                            {% endif %}
+                    {% else %}
+                    <span>in progress</span>
+                    {% endif %}
+                    </a>
+                </span>
+                <span>Date: {{ checksum.date }}</span>
+                </li>
+            {% endfor %}
+        </ul>
     
     {% else %}
         <p>No checksum verifications have been requested on this data element.</p>

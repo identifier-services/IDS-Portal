@@ -402,7 +402,6 @@ class ElementDetailView(generic.DetailView):
             if checksum.status == Checksum.CMP and checksum.value:
                 standard = {
                     'value': checksum.value, 
-                    'completed': checksum.completed
                 }
                 break
 
@@ -410,17 +409,30 @@ class ElementDetailView(generic.DetailView):
 
         if standard:
             for checksum in ordered_sums:
-                good = checksum.value == standard.value
+                status = 'in progress'
+                if checksum.value == standard.value:
+                    status = 'good'
+                elif checksum.error_message:
+                    status = 'failed'
+                elif checksum.status == Checksum.CMP:
+                    status = 'conflict'
+                    
                 sums.append({
-                    'good': good,
+                    'status':status,
                     'link':checksum.get_absolute_url(),
                     'message':checksum.error_message,
                     'date':checksum.initiated
                 })
         else:
             for checksum in ordered_sums:
+                status = 'in progress'
+                if checksum.error_message:
+                    status = 'failed'
+                elif checksum.status == Checksum.CMP:
+                    status = 'conflict'
+
                 sums.append({
-                    'good': False,
+                    'status':status,
                     'link':checksum.get_absolute_url(),
                     'message':checksum.error_message,
                     'date':checksum.initiated
@@ -754,9 +766,12 @@ def checksum_update(request, pk, *args, **kwargs):
             checksum.error_message = err_msg
             checksum.status = 'ERR'
 
+        import pdb; pdb.set_trace()
+
         if value or err_msg:
             checksum.save()
     except Exception as e:
+        import pdb; pdb.set_trace()
         logger.error(e)
         return HttpResponse('Error: %s' % e)
 
