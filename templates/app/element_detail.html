@@ -5,15 +5,6 @@
 
     {{ object }}
 
-    <p>
-    {% if object.root %}
-        project owner:
-        {{ object.root.owner }}
-    {% endif %}
-    </p>
-
-    {% include "app/includes/graph.html" %}
-
     {% if object.get_parent_relations %}
         <hr/>
         <h3>Parents:</h3>
