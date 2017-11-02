@@ -1,0 +1,181 @@
+#!/bin/bash
+
+echo
+echo "Begin debug messages from checksum.template"
+echo
+
+export PATH=$PATH:"$HOME/.aspera/connect/bin"
+
+# get UUID and SRA number
+UUID=${UUID}
+SRA_NUM=${SRA}
+AGAVE_FILE=${AGAVE_URL}
+EXTERNAL_URL=${URL}
+SRA_PATH="./SRA/"
+
+FILE_PATH=""
+
+echo "INPUT"
+echo
+echo "UUID: ${UUID}"
+echo "SRA_NUM: ${SRA}"
+echo "AGAVE_FILE: ${AGAVE_URL}"
+echo "EXTERNAL_URL: ${URL}"
+echo
+
+echo "DEBUG"
+echo
+
+# internal agave file provided
+if [ ${AGAVE_FILE} != "" ]; then
+
+	echo "Internal agave file provided."
+	echo "FILE_PATH: ${AGAVE_FILE}"
+	echo
+
+	FILE_PATH=${AGAVE_FILE}
+else
+	# SRA number provided
+	if [ ${SRA_NUM} != "" ];then
+
+		echo "SRA number provided."
+		echo "SRA_NUM: ${SRA_NUM}"
+		echo
+
+		echo "Make aspera executable."
+		echo "$ chmod 755 ./bin/aspera.sh"
+		echo
+
+		chmod 755 ./bin/aspera.sh
+
+		echo "Download SRA data using aspera."
+		echo "$ ./bin/aspera.sh ${SRA_NUM} ${SRA_PATH}"
+		echo
+
+		# Downloading file
+		./bin/aspera.sh ${SRA_NUM} ${SRA_PATH}
+
+		# Running checksum and update metadata
+		if [ $? -eq 0 ]; then
+			echo "Aspera exited successfully."
+			echo
+
+			FILE_PATH="./SRA/${SRA_NUM}.sra"
+		else
+			echo "Aspera did not exit successfully."
+			echo "Exiting job with error code ${?}"
+
+			echo
+			echo "End debug messages from checksum.template"
+			echo
+
+			exit $?
+		fi
+	else
+		# external file URL provided
+		if [ ${EXTERNAL_URL} != "" ]; then
+
+			echo "External URL provided."
+			echo "EXTERNAL_URL: ${EXTERNAL_URL}"
+			echo
+
+			echo "Download external data."
+			echo "$ wget ${EXTERNAL_URL}"
+			echo
+
+			# Download external file
+			wget ${EXTERNAL_URL}
+
+			if [ $? -eq 0 ]; then
+				echo "wget exited successfully."
+				echo
+
+				FILE_PATH="${EXTERNAL_URL##*/}"
+			else
+				echo "wget did not exit successfully."
+				echo "Exiting job with error code ${?}"
+
+				echo
+				echo "End debug messages from checksum.template"
+				echo
+
+				exit $?
+			fi
+		else
+			echo 'No input of file match!'
+
+			echo
+			echo "End debug messages from checksum.template"
+			echo
+
+			exit 1
+		fi
+	fi
+fi
+
+echo "FILE_PATH: ${FILE_PATH}"
+echo
+
+if [ ! -f "${FILE_PATH}" ]; then
+        echo 'File not found! Please confirm the input.'
+        curl -X POST -d "error='File not found.'" https://www.idsvc.org/checksum/${UUID}/update/
+		echo "Exiting with error code 1"
+
+		echo
+		echo "End debug messages from checksum.template"
+		echo
+
+        exit 1
+fi
+
+md5=($(md5sum ${FILE_PATH}))
+lastChecksumUpdated=$(date '+%Y-%m-%d %X')
+
+echo "checksum: ${md5}"
+echo "lastChecksumUpdated: ${lastChecksumUpdated}"
+echo
+
+# echo "Post the checksum to requestbin."
+# echo "$ curl -k --data \"UUID=${UUID}&checksum=${md5}&lastChecksumUpdated=${lastChecksumUpdated}\" http://requestb.in/v0cdvwv0"
+# echo
+
+# post to requestbin, used for development
+# curl -k --data "UUID=${UUID}&checksum=${md5}&lastChecksumUpdated=${lastChecksumUpdated}" http://requestb.in/v0cdvwv0
+
+echo "Post the checksum to webhook."
+echo "$ curl -k --data \"UUID=${UUID}&checksum=${md5}&lastChecksumUpdated=${lastChecksumUpdated}\" https://identifierservices.org/webhook/update_checksum"
+echo "$ curl -X POST -d \"checksum=${md5}\" https://www.idsvc.org/checksum/${UUID}/update/"
+echo
+
+# post the checksum to webhook
+curl -k --data "UUID=${UUID}&checksum=${md5}&lastChecksumUpdated=${lastChecksumUpdated}" https://identifierservices.org/webhook/update_checksum
+curl -X POST -d "checksum={$md5}" https://www.idsvc.org/checksum/${UUID}/update/
+
+
+if [ $? -eq 0 ]; then
+	echo "curl exited successfully."
+	echo
+else
+	echo "curl did not exit successfully."
+	echo
+fi
+
+echo "Removing file."
+echo "rm ${FILE_PATH}"
+echo
+
+rm ${FILE_PATH}
+
+echo "Removing directory."
+echo "rm -rf SRA"
+echo
+
+rm -rf SRA
+
+echo "Exiting error code 0"
+
+echo
+echo "End debug messages from checksum.template"
+echo
+
+exit 0
