@@ -766,12 +766,9 @@ def checksum_update(request, pk, *args, **kwargs):
             checksum.error_message = err_msg
             checksum.status = 'ERR'
 
-        import pdb; pdb.set_trace()
-
         if value or err_msg:
             checksum.save()
     except Exception as e:
-        import pdb; pdb.set_trace()
         logger.error(e)
         return HttpResponse('Error: %s' % e)
 
