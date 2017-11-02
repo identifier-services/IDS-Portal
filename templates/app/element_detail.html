@@ -82,18 +82,29 @@
 
     <hr/>
     <h3>Checksum:</h3>
-    <ul>
-        {% for checksum in object.checksum_set.all %}
-        <li>
-            {% for field in checksum.get_fields %}
-                <li><b>{{ field.label }}:</b> {{ field.value }}</li>
-            {% endfor %}
-        </li>
-        {% endfor %}
-        {% if not object.checksum_set.all %}
-            <p>No checksum verifications have been requested on this data element.</p>
+    {% if object.checksums %}
+        <p>The last <a href="{{ objects.checksums.0.link }}">checksum</a> was 
+        {% if objects.checksums.0.good %}
+        <span class="green">good</span>
+        {% else %}
+        <span class="red">bad</span>
         {% endif %}
-    </ul>
+        </p>
+
+        {% for checksum in object.checksums %}
+            <p>Status: <a href="{{ objects.link }}">
+                {% if checksum.good %}
+                <span class="green">good</span>
+                {% else %}
+                <span class="red">bad</span>
+                {% endif %}
+            </p>
+            <p>Date: {{ checksum.date }}</p>
+        {% endfor %}
+    
+    {% else %}
+        <p>No checksum verifications have been requested on this data element.</p>
+    {% endif %}
 
     <a href="{{ object.get_absolute_url}}/verify">Verify Location</a>
     {% endif %}

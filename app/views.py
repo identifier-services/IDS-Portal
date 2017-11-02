@@ -392,9 +392,41 @@ class ElementDetailView(generic.DetailView):
             })
         context['values'] = values
 
-        sums = Checksum.objects.filter(data=context_object.id)
+        ordered_sums = Checksum.objects.filter(
+            data=context_object.id).order_by('initiated')
 
-        print sums
+        sums = []
+
+        standard = None
+        for checksum in ordered_sums:
+            if checksum.status == Checksum.CMP and checksum.value:
+                standard = {
+                    'value': checksum.value, 
+                    'completed': checksum.completed
+                }
+                break
+
+        ordered_sums.reverse()
+
+        if standard:
+            for checksum in ordered_sums:
+                good = checksum.value == standard.value
+                sums.append({
+                    'good': good,
+                    'link':checksum.get_absolute_url(),
+                    'message':checksum.error_message,
+                    'date':checksum.initiated
+                })
+        else:
+            for checksum in ordered_sums:
+                sums.append({
+                    'good': False,
+                    'link':checksum.get_absolute_url(),
+                    'message':checksum.error_message,
+                    'date':checksum.initiated
+                })
+
+        context['checksums'] = sums
 
         return context
 
