@@ -932,7 +932,7 @@ class Element(AbstractModel):
         path = next(iter(
                 [field.value for field in self.elementcharfieldvalue_set.all()\
                     if 'path' in field.element_field_descriptor.label.lower() \
-                    and 'agave://' in field.value]
+                    and 'agave' in field.value]
             ),None)
         sra = next(iter(
                 [field.value for field in self.elementcharfieldvalue_set.all()\
