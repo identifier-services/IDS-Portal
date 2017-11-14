@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.core import paginator
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -9,6 +10,7 @@ from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
 import logging
+import requests
 
 from zipfile import ZipFile
 import csv
@@ -410,7 +412,7 @@ class ElementDetailView(generic.DetailView):
         if standard:
             for checksum in ordered_sums:
                 status = 'in progress'
-                if checksum.value == standard.value:
+                if checksum.value == standard['value']:
                     status = 'good'
                 elif checksum.error_message:
                     status = 'failed'
@@ -458,6 +460,14 @@ def request_doi(request, pk):
     try:
         dataset = Dataset.objects.get(id=pk)
         dataset.request_doi()
+
+        headers = {"Content-Type": "application/json"}
+        r = requests.post('https://zenodo.org/api/deposit/depositions',
+                params={'access_token': settings.ZENODO_TOKEN}, json={},
+                headers=headers)
+        dataset.doi = r.json()['metadata']['prereserve_doi']['doi']
+        dataset.save()
+
     except Exception as e:
         logger.error(e)
         return HttpResponseRedirect(reverse_lazy('app:project_list'))

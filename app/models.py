@@ -932,7 +932,7 @@ class Element(AbstractModel):
         path = next(iter(
                 [field.value for field in self.elementcharfieldvalue_set.all()\
                     if 'path' in field.element_field_descriptor.label.lower() \
-                    and 'agave://' in field.value]
+                    and 'agave' in field.value]
             ),None)
         sra = next(iter(
                 [field.value for field in self.elementcharfieldvalue_set.all()\
@@ -1037,6 +1037,8 @@ class Dataset(AbstractModel):
 
     status = models.CharField(max_length=200, blank=True, null=True,
         default='', editable=False)
+
+    doi = models.CharField(max_length=100, blank=True, null=True, default='')
 
     path = models.OneToOneField(Path, on_delete=models.CASCADE,
         null=True, blank=True, editable=False)

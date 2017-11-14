@@ -177,11 +177,6 @@ urlpatterns = [
         views.element_init_checksum, 
         name='element_init_checksum'),
     
-    # publish
-    url(r'^element/(?P<pk>[0-9a-f-]+)/publish/$',
-        views.request_doi, 
-        name='request_doi'),
-    
     # delete
     url(r'^element/(?P<pk>[0-9a-f-]+)/delete/$', 
         views.ElementDeleteView.as_view(), 
@@ -210,6 +205,11 @@ urlpatterns = [
     url(r'^dataset/(?P<pk>[0-9a-f-]+)/update/$', 
         views.DatasetUpdateView.as_view(), 
         name='dataset_update'),
+
+    # publish
+    url(r'^dataset/(?P<pk>[0-9a-f-]+)/publish/$',
+        views.request_doi, 
+        name='request_doi'),
     
     # delete
     url(r'^dataset/(?P<pk>[0-9a-f-]+)/delete/$', 
