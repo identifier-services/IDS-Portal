@@ -192,6 +192,7 @@ LOGGING = {
 # Tenant Configuration
 AGAVE_TENANT_ID = os.environ.get('AGAVE_TENANT_ID', 'iplantc.org')
 AGAVE_TENANT_BASEURL = os.environ.get('AGAVE_TENANT_BASEURL', 'https://agave.iplantc.org/')
+ZENODO_TOKEN = os.environ.get('ZENODO_TOKEN','njYavqrucgzDLyruGlupmrdIcnXrrzkuK0p00Beqv4jnY0DJQZIcFaQ0XOgH')
 #
 # Client Configuration
 AGAVE_CLIENT_KEY = os.environ.get('AGAVE_CLIENT_KEY')

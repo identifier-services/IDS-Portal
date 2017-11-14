@@ -979,6 +979,8 @@ class Dataset(AbstractModel):
     status = models.CharField(max_length=200, blank=True, null=True,
         default='', editable=False)
 
+    doi = models.CharField(max_length=100, blank=True, null=True, default='')
+
     path = models.OneToOneField(Path, on_delete=models.CASCADE,
         null=True, blank=True, editable=False)
 
