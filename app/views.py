@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.core import paginator
 from django.conf import settings
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -34,8 +35,8 @@ class BaseGenericListView(generic.ListView):
     paginate_by = 25
 
     def get_context_data(self, **kwargs):
-        logger.debug('request user: %s' % self.request.user)
-        logger.debug('dir(request.user): %s' % dir(self.request.user))
+        # logger.debug('request user: %s' % self.request.user)
+        # logger.debug('dir(request.user): %s' % dir(self.request.user))
 
         context = super(BaseGenericListView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
@@ -333,6 +334,63 @@ def element_init_checksum(request, pk):
 class ElementListView(BaseGenericListView):
     model = Element
 
+    def get_queryset(self):
+        return_json = False
+        heirarchical_filters = []
+        kv_queries = []
+
+        for k,v in self.request.GET.items():
+            k = k.lower().replace('_','').replace('-','')
+
+            # investigation type query
+            if k in ['inv', 'investigation', 'invtype','investigationtype']:
+                heirarchical_filters.append(
+                    Q(project__investigation_type__name__iexact=v))
+
+            # project query
+            elif k in ['proj','project']:
+                heirarchical_filters.append(
+                    Q(project__name__iexact=v))
+
+            # path query
+            elif k == 'path':
+                heirarchical_filters.append(
+                    Q(path_id=v))
+
+            # element type query
+            elif k in ['elem','element','elemtype','elementtype']:
+                heirarchical_filters.append(
+                    Q(element_type__name__iexact=v))
+
+            # return json?
+            elif k == 'json':
+                return_json = True
+
+            # query by element field values
+            else:
+                kv_queries.append((k,v))
+        
+        if heirarchical_filters:
+            query_set = Element.objects.filter(*heirarchical_filters)
+        else:
+            query_set = Element.objects.all()
+
+        if kv_queries:
+            field_values  =[]
+            
+            for k,v in kv_queries:
+                field_values.extend(
+                    [descr.value_type.objects.filter(
+                        element__in=query_set, 
+                        value__icontains=v
+                    ) for descr in ElementFieldDescriptor.objects.filter(
+                        label__iexact=k
+                    )])
+
+            filter_by_values = Q(id__in=[v.element.id for qs in field_values for v in qs])
+            query_set = Element.objects.filter(filter_by_values)
+
+        return query_set
 
 class ElementCreateView(BaseGenericCreateView):
     model = Element
@@ -343,6 +401,7 @@ class ElementDetailView(generic.DetailView):
     template_name = 'app/element_detail.html'
 
     def get_context_data(self, **kwargs):
+
         context = super(ElementDetailView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
         context['verbose_name'] = verbose_name.title() 

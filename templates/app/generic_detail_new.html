@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    {% include "app/includes/graph.html" %}
+
+    <a href="{{ object.get_absolute_url }}/update">Edit {{ verbose_name }}</a>
+    <a href="{{ object.get_absolute_url }}/delete">Delete {{ verbose_name }}</a>
+{% endblock %}

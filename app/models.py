@@ -33,6 +33,32 @@ portal_agave_client = Agave(
     token=settings.AGAVE_SUPER_TOKEN
 )
 
+# class Graph(object):
+#
+#     def __init__(self, project):
+#         self._elements = Element.objects.filter(project=project)
+#         self._graph = dict.fromkeys([str(elem.id) for elem in self._elements])
+#        
+#         Edges = namedtuple('Edges', 'distance visited incoming outgoing')
+#        
+#         for element in self._elements:
+#             incoming = [str(rel.source.id) \
+#                 for rel in element.incoming_relationships.all()]
+#             outgoing = [str(rel.target.id) \
+#                 for rel in element.outgoing_relationships.all()]
+#             self._graph[str(element.id)] = Edges(
+#                 distance=float('inf'), visited=False,
+#                 incoming=incoming, outgoing=outgoing)
+#
+#         print self._graph
+#
+#     def shortest_path(self, source, destination):
+#         unvisited = set([x for x in self.elements])
+#         current = self._graph[source]
+#         unvisited.remove(source)
+#         return None
+    
+
 def snake(name):
     """
     Takes camelcase string, returns string in snake case.
@@ -153,34 +179,8 @@ class AbstractModel(Base, models.Model):
     description = models.TextField(max_length=1000, 
         help_text="Enter a description.", blank=True)
 
-    # @property
-    # def root(self):
-    #     root_objects = set({})
-    #     # import pdb; pdb.set_trace()
-    #     parent_rels = self.get_parent_relations()
-    #     for parent_rel in parent_rels:
-    #         parent = parent_rel['object']
-    #         if type(parent) == Parent:
-    #             root_objects.add(parent)
-    #         print parent, type(parent)
-
     class Meta:
         abstract = True
-
-
-class Node(object):
-    def __init__(self):
-        self.name = ''
-        self.left = []
-        self.right = []
-        self.obj = None
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return 'graph node: %s, |left| = %s, |right| = %s' % (
-            self.name, str(len(self.left)), str(len(self.right)))
 
 
 class InvestigationType(AbstractModel):
@@ -188,65 +188,6 @@ class InvestigationType(AbstractModel):
 
     definition_file = models.FileField('definition file(s)', upload_to='documents/%Y/%m/%d/', 
         blank=True, null=True)
-
-    def _build_graph(self, root):
-        fk_type_rels = ['PART','ISIN','ISOU']
-        temp_list = root.right
-        for node in temp_list:
-            for parent_rel in node.obj.forward_relationship_defs.filter(
-                rel_type_abbr__in=fk_type_rels):
-                parent = parent_rel.target
-                parent_node = next(iter(
-                    filter(lambda a,b=parent: a.obj==b, temp_list)))
-                if not parent_node:
-                    continue
-                if parent_node not in node.left:
-                    node.left.append(parent_node)
-                if node not in parent_node.right:
-                    parent_node.right.append(node)
-                if node in root.right:
-                    root.right.remove(node)
-                if root in node.left:
-                    node.left.remove(root)
-    @property
-    def bs_nested_list(self):
-        y = ['Lungmap',
-                ['My lungmap project',
-                    ['specimen',
-                        ['chunk',
-                            ['process']],
-                    'probe',
-                        ['process'],
-                    'process', 
-                        ['image',
-                            ['dataset']]]]]
-        return y
-
-    @property
-    def graph(self):
-        root = Node()
-        root.name = 'Investigation Type: %s' % self.name
-        root.obj = self
-
-        for element_type in ElementType.objects.filter(investigation_type=self):
-            n = Node()
-            n.name = element_type.name
-            n.left.append(root)
-            root.right.append(n)
-            n.obj = element_type
-
-        self._build_graph(root)
-
-        return root
-
-    # def _build_dep_list(self, node):
-    #     print node
-    #     for child in node.right:
-    #         self._build_dep_list(child)
-
-    # @property
-    # def dependency_list(self):
-    #     return self._build_dep_list(self.graph)
 
     def save(self, *args, **kwargs):
         super(InvestigationType, self).save(*args, **kwargs)
