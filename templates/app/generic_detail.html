@@ -3,7 +3,7 @@
 {% block content %}
     <h2>{{ verbose_name }} Detail</h2>
 
-    {{ object }}
+    {% include "app/includes/graph.html" %}
 
     {% if object.get_parent_relations %}
         <hr/>

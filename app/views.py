@@ -9,10 +9,11 @@ from django.urls import reverse_lazy
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
-import logging
-
-from zipfile import ZipFile
 import csv
+import urllib
+from zipfile import ZipFile
+
+import logging
 
 from .models import (InvestigationType, Project, ElementType,
     RelationshipDefinition, ElementFieldDescriptor, Element, Checksum, Dataset,
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 class BaseGenericListView(generic.ListView):
     template_name = 'app/generic_list.html'
     context_object_name = 'object_list'
-    paginate_by = 25
+    paginate_by = 20
 
     def get_context_data(self, **kwargs):
         # logger.debug('request user: %s' % self.request.user)
@@ -47,7 +48,7 @@ class BaseGenericListView(generic.ListView):
 class BaseGenericDetailView(generic.DetailView):
     template_name = 'app/generic_detail.html'
     context_object_name = 'object'
-    paginate_by = 25
+    paginate_by = 20
 
     def get_context_data(self, **kwargs):
         context = super(BaseGenericDetailView, self).get_context_data(**kwargs)
@@ -55,20 +56,146 @@ class BaseGenericDetailView(generic.DetailView):
         context['verbose_name'] = verbose_name.title()
         context['type_name'] = verbose_name.replace(' ', '_')
 
-        #context_object = context['object']
-        #child_rels_group = context_object.get_child_relations()
+        if self.model == InvestigationType:
+            return context
 
-        #page = self.request.GET.get('page')
+        if self.model == Project:
+            project = context['object']
+        else:
+            project = context['object'].project
 
-        #paginators = []
-        #for child_rel_group in child_rels_group:
-        #    pag = paginator.Paginator(child_rel_group['objects'], self.paginate_by)
-        #    try:
-        #        paginators.append(pag.page(page))
-        #    except:
-        #        paginators.append(pag.page(1))
+        inv_type = project.investigation_type
+        elem_types = inv_type.elementtype_set.all()
 
-        #context['page_objs'] = paginators
+        contents = {}
+
+        for elem_type in elem_types:
+            contents[elem_type.name] = {
+                'link': '%s?project=%s&element=%s' % (
+                    reverse_lazy('app:element_list'),
+                    project.name,
+                    elem_type.name
+                ),
+                'count': Element.objects.filter(
+                    element_type=elem_type,
+                    project=project
+                ).count()
+            }
+
+        contents['dataset'] = {
+                'link': '%s?project=%s' % (
+                    reverse_lazy('app:dataset_list'),
+                    project.name
+                ),
+                'count': Dataset.objects.filter(
+                    project=project
+                ).count()
+            }
+
+        context['contents'] = contents
+
+        graph = {
+            'height': '740',
+            'width': '740',
+            'nodes': [
+                {
+                    'x': '0',
+                    'y': '0',
+                    'element_count': '1',
+                    'element_type_name': inv_type.name,
+                    'url': reverse_lazy(
+                        'app:investigation_type_detail',
+                        kwargs={'pk': inv_type.id}
+                    ),
+                },
+                {
+                    'x': '200',
+                    'y': '0',
+                    'element_count': '1',
+                    'element_type_name': project.name,
+                    'url': reverse_lazy(
+                        'app:project_detail',
+                        kwargs={'pk': project.id}
+                    ),
+                },
+                {
+                    'x': '200',
+                    'y': '200',
+                    'element_count': contents['specimen']['count'],
+                    'element_type_name': 'Specimen',
+                    'url': contents['specimen']['link'],
+                },
+                {
+                    'x': '400',
+                    'y': '200',
+                    'element_count': contents['chunk']['count'],
+                    'element_type_name': 'Chunk',
+                    'url': contents['chunk']['link'],
+                },
+                {
+                    'x': '200',
+                    'y': '400',
+                    'element_count': contents['probe']['count'],
+                    'element_type_name': 'Probe',
+                    'url': contents['probe']['link'],
+                },
+                {
+                    'x': '400',
+                    'y': '400',
+                    'element_count': contents['process']['count'],
+                    'element_type_name': 'Process',
+                    'url': contents['process']['link'],
+                },
+                {
+                    'x': '400',
+                    'y': '600',
+                    'element_count': contents['image']['count'],
+                    'element_type_name': 'Image',
+                    'url': contents['image']['link'],
+                },
+                {
+                    'x': '600',
+                    'y': '600',
+                    'element_count': contents['dataset']['count'],
+                    'element_type_name': 'Dataset',
+                    'url': contents['dataset']['link'],
+                },
+            ],
+            'edges': [                                                          
+                {
+                    'x': '100',
+                    'y': '50',
+                    'direction': 'right',
+                },
+                {
+                    'x': '300',
+                    'y': '250',
+                    'direction': 'right',
+                },
+                {
+                    'x': '450',
+                    'y': '300',
+                    'direction': 'down',
+                },
+                {
+                    'x': '300',
+                    'y': '450',
+                    'direction': 'right',
+                },
+                {
+                    'x': '450',
+                    'y': '500',
+                    'direction': 'down',
+                },
+                {
+                    'x': '500',
+                    'y': '650',
+                    'direction': 'right',
+                },
+            ]
+        }
+
+        context['graph'] = graph
 
         return context
 
@@ -344,11 +471,13 @@ class ElementListView(BaseGenericListView):
             if k in ['inv', 'investigation', 'invtype','investigationtype']:
                 heirarchical_filters.append(
                     Q(project__investigation_type__name__iexact=v))
+                    # Q(project__investigation_type__id=v))
 
             # project query
             elif k in ['proj','project']:
                 heirarchical_filters.append(
                     Q(project__name__iexact=v))
+                    # Q(project__id=v))
 
             # path query
             elif k == 'path':
@@ -363,6 +492,10 @@ class ElementListView(BaseGenericListView):
             # return json?
             elif k == 'json':
                 return_json = True
+
+            # ignore paging
+            elif k == 'page':
+                continue
 
             # query by element field values
             else:
@@ -394,13 +527,14 @@ class ElementCreateView(BaseGenericCreateView):
     model = Element
 
 
-class ElementDetailView(generic.DetailView):
+class ElementDetailView(BaseGenericDetailView):#generic.DetailView):
     model = Element
     template_name = 'app/element_detail.html'
 
     def get_context_data(self, **kwargs):
 
         context = super(ElementDetailView, self).get_context_data(**kwargs)
+
         verbose_name = self.model._meta.verbose_name
         context['verbose_name'] = verbose_name.title() 
         context['type_name'] = verbose_name.replace(' ', '_')
@@ -537,7 +671,7 @@ class DatasetDetailView(BaseGenericDetailView):
     model = Dataset
     template_name = 'app/dataset_detail.html'
 
-    def get_context_data(self, **kwargs):
+    def get_context_data_(self, **kwargs):
         context = super(DatasetDetailView, self).get_context_data(**kwargs)
         verbose_name = self.model._meta.verbose_name
         context['verbose_name'] = verbose_name.title() 
