@@ -25,7 +25,7 @@
         {% for node in graph.nodes %}
         <svg x="{{ node.x }}" y="{{ node.y }}" width="103" height="103">
             <clipPath id="nodeMask">
-                <circle cx="50%" cy="50%" r="48"/>
+                <circle cx="50%" cy="50%" r="48" {% if node.current %}class="current"{% endif %}/>
             </clipPath>
             <a href="{{ node.url }}">
                 <circle cx="50%" cy="50%" r="49"/>
